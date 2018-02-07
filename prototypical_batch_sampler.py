@@ -13,6 +13,7 @@ class PrototypicalBatchSampler(object):
         self.classes, self.counts = np.unique(self.labels, return_counts=True)
         self.idxs = range(len(self.labels))
         self.ndclasses = np.empty((len(self.classes), max(self.counts)), dtype=int) * np.nan
+        # TODO avoid for (?)
         for idx, label in enumerate(self.labels):
             self.ndclasses[label, np.where(np.isnan(self.ndclasses[label]))[0][0]] = idx
 
