@@ -23,7 +23,7 @@ class PrototypicalBatchSampler(object):
             for i, c in enumerate(curr_classes):
                 s = slice(i*self.sample_per_class, (i+1)*self.sample_per_class)
                 batch[s] = np.random.choice(self.ndclasses[c], self.sample_per_class, replace=False)
-            np.random.shuffle(batch)
+            np.random.shuffle(batch) # this should be uselsess (?)
             yield batch
 
     def __len__(self):
