@@ -26,8 +26,9 @@ def euclidean_dist(x, y):
     return torch.pow(x - y, 2).sum(2)
 
 
-def protypical_loss(output, target, n_support):
+def prototypical_loss(output, target, n_support):
     cputargs = target.cpu() if target.is_cuda else target
+    cputargs = cputargs.data
     cpuoutput = output.cpu() if target.is_cuda else output
 
     def supp_idxs(c):
@@ -43,18 +44,18 @@ def protypical_loss(output, target, n_support):
     oq_idxs = map(lambda c: np.where(cputargs.numpy() == c)[0][n_support:], classes)
     oq = output[np.array(list(oq_idxs)).flatten()]
 
-    if target.is_cuda:
-        prototypes = prototypes.cuda()
+    prototypes = prototypes.cuda() if target.is_cuda else prototypes
 
     dists = euclidean_dist(oq, prototypes)
 
-    log_p_y = F.log_softmax(-dists).view(n_classes, n_query, -1)
+    log_p_y = F.log_softmax(-dists, dim=1).view(n_classes, n_query, -1)
 
-    target_inds = torch.arange(0, n_classes).view(
-        n_classes, 1, 1).expand(n_classes, n_query, 1).long()
+    target_inds = torch.arange(0, n_classes)
+    target_inds = target_inds.view(n_classes, 1, 1)
+    target_inds = target_inds.expand(n_classes, n_query, 1).long()
+    target_inds = target_inds.long()
     target_inds = Variable(target_inds, requires_grad=False)
-    if target.is_cuda:
-        target_inds = target_inds.cuda()
+    target_inds = target_inds.cuda() if target.is_cuda else target_inds
 
     loss_val = -log_p_y.gather(2, target_inds).squeeze().view(-1).mean()
     _, y_hat = log_p_y.max(2)

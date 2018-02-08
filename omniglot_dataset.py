@@ -19,7 +19,7 @@ DSET_SPLIT_SIZES = {
 }
 
 
-class Omniglot(data.Dataset):
+class OmniglotDataset(data.Dataset):
     urls = [
         'https://github.com/brendenlake/omniglot/raw/master/python/images_background.zip',
         'https://github.com/brendenlake/omniglot/raw/master/python/images_evaluation.zip'
@@ -39,7 +39,7 @@ class Omniglot(data.Dataset):
     '''
 
     def __init__(self, mode='train', root='dataset', transform=None, target_transform=None, download=False):
-        super(Omniglot, self).__init__()
+        super(OmniglotDataset, self).__init__()
         self.root = root
         self.transform = transform
         self.target_transform = target_transform
