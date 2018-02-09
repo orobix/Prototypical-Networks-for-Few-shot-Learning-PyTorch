@@ -90,8 +90,8 @@ for epoch in range(epochs):
         x, y = Variable(x), Variable(y)
         if cuda:
             x, y = x.cuda(), y.cuda()
-        output = model(x)
-        l, acc = loss(output, target=y, n_support=num_support_tr)
+        model_output = model(x)
+        l, acc = loss(model_output, target=y, n_support=num_support_tr)
         l.backward()
         optim.step()
         train_loss.append(l.data[0])
@@ -105,8 +105,8 @@ for epoch in range(epochs):
         x, y = Variable(x), Variable(y)
         if cuda:
             x, y = x.cuda(), y.cuda()
-        output = model(x)
-        l, acc = loss(output, target=y, n_support=num_support_tr)
+        model_output = model(x)
+        l, acc = loss(model_output, target=y, n_support=num_support_tr)
         val_loss.append(l.data[0])
         val_acc.append(acc.data[0])
     avg_loss = np.mean(val_loss[-iterations:])

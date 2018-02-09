@@ -37,7 +37,7 @@ def euclidean_dist(x, y):
     return torch.pow(x - y, 2).sum(2)
 
 
-def prototypical_loss(output, target, n_support):
+def prototypical_loss(input, target, n_support):
     '''
     Inspired by https://github.com/jakesnell/prototypical-networks/blob/master/protonets/models/few_shot.py
 
@@ -48,14 +48,14 @@ def prototypical_loss(output, target, n_support):
     classes, of appartaining to a class c, loss and accuracy are then computed
     and returned
     Args:
-    - output: the model output for a batch of samples
+    - input: the model input for a batch of samples
     - target: ground truth for the above batch of samples
     - n_support: number of samples to keep in account when computing
       barycentres, for each one of the current classes
     '''
     cputargs = target.cpu() if target.is_cuda else target
     cputargs = cputargs.data
-    cpuoutput = output.cpu() if target.is_cuda else output
+    cpuinput = input.cpu() if target.is_cuda else input
 
     def supp_idxs(c):
         return torch.LongTensor(np.where(cputargs.numpy() == c)[0][:n_support])
@@ -64,11 +64,11 @@ def prototypical_loss(output, target, n_support):
     n_classes = len(classes)
     n_query = len(np.where(cputargs.numpy() == classes[0])[0]) - n_support
     os_idxs = list(map(supp_idxs, classes))
-    prototypes = [cpuoutput[i].mean(0).data.numpy().tolist() for i in os_idxs]
+    prototypes = [cpuinput[i].mean(0).data.numpy().tolist() for i in os_idxs]
     prototypes = Variable(torch.FloatTensor(prototypes))
 
     oq_idxs = map(lambda c: np.where(cputargs.numpy() == c)[0][n_support:], classes)
-    oq = output[np.array(list(oq_idxs)).flatten()]
+    oq = input[np.array(list(oq_idxs)).flatten()]
 
     prototypes = prototypes.cuda() if target.is_cuda else prototypes
 
