@@ -50,7 +50,7 @@ def prototypical_loss(input, target, n_support):
     classes, of appartaining to a class c, loss and accuracy are then computed
     and returned
     Args:
-    - input: the model input for a batch of samples
+    - input: the model output for a batch of samples
     - target: ground truth for the above batch of samples
     - n_support: number of samples to keep in account when computing
       barycentres, for each one of the current classes
