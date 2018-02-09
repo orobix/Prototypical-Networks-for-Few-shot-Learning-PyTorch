@@ -37,7 +37,7 @@ In particular, the functions takes in input the batch input from the model, the 
 Please note that the training code is here just for demonstration purposes. It use a pre-trained resnet model imported from the [torchvision](https://github.com/pytorch/vision/tree/master/torchvision) package as feature extractor and train only the last layer as a classifier.
 
 
-## License
+# License
 
 This project is licensed under the MIT License
 
