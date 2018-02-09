@@ -2,10 +2,21 @@ import torch
 import numpy as np
 from torch.autograd import Variable
 from torch.nn import functional as F
+from torch.nn.module import Module
+from torch.nn.modules.loss import _assert_no_grad
 
-'''
-Inspired by https://github.com/jakesnell/prototypical-networks/blob/master/protonets/models/few_shot.py
-'''
+
+class PrototypicalLoss(Module):
+    '''
+    Class à la PyTorch for the prototypical loss function defined below
+    '''
+    def __init__(self, n_support):
+        super(PrototypicalLoss, self).__init__()
+        self.n_support = n_support
+
+    def forward(self, input, target):
+        _assert_no_grad(target)
+        return prototypical_loss(input, target, self.n_support)
 
 
 def euclidean_dist(x, y):
@@ -28,6 +39,8 @@ def euclidean_dist(x, y):
 
 def prototypical_loss(output, target, n_support):
     '''
+    Inspired by https://github.com/jakesnell/prototypical-networks/blob/master/protonets/models/few_shot.py
+
     Compute the barycentres by averaging the features of n_support
     samples for each class in target, computes then the distances from each
     samples' features to each one of the barycentres, computes the
