@@ -1,9 +1,9 @@
 # Prototypical Networks for Few shot Learning in PyTorch
 Simple Implementation of Prototypical Networks for Few Shot Learning (https://arxiv.org/abs/1703.05175) in Pytorch
 
-# Prototypiacl Networks
+# Prototypical Networks
 
-As shown in the reference paper Prototypical Networks are trained to embed samples features in a vectorial space, in particular, at each episode (iteration), a number of samples for a subset of classes are selected and sent thourgh the model, for each subset of class `c` a number of samples'features (`n_support`) are used to guess the prototype (their barycentre coordinates in the vactorial space) for that class, so then the distances between the remaining `n_query` samples and their class barycentre can be minimized.
+As shown in the reference paper Prototypical Networks are trained to embed samples features in a vectorial space, in particular, at each episode (iteration), a number of samples for a subset of classes are selected and sent through the model, for each subset of class `c` a number of samples' features (`n_support`) are used to guess the prototype (their barycentre coordinates in the vectorial space) for that class, so then the distances between the remaining `n_query` samples and their class barycentre can be minimized.
 
 ![Prototypical Networks](doc/imgs/proto-1.png)
 
@@ -20,16 +20,16 @@ We will use the official dataset when it will be added to torchvision if it does
 
 # Prototypical Batch Sampler
 
-As described in its PyDoc, this class is used to generate the indexes of each batch for a ptrototypical training algorithm.
+As described in its PyDoc, this class is used to generate the indexes of each batch for a prototypical training algorithm.
 
-In particular, the object is instantiated by passing the list of the labels for the dataset, the sampler inferes then the total number of classes and creates a set of indexes for each class ni the dataset. At each episode the sampler selects 'n_classes' random classes and returns a number (n_support + n_query) of samples indexes for each one of the selected classes.
+In particular, the object is instantiated by passing the list of the labels for the dataset, the sampler infers then the total number of classes and creates a set of indexes for each class ni the dataset. At each episode the sampler selects 'n_classes' random classes and returns a number (n_support + n_query) of samples indexes for each one of the selected classes.
 
 # Prototypical Loss
 
 Compute the loss as in the cited paper, mostly inspired by [this code](https://github.com/jakesnell/prototypical-networks/blob/master/protonets/models/few_shot.py) by one of its authors.
 
-In particular, the functions takes in input the batch output from the model, the samples ground trhuths and the number `n_suppport` of samples to be used as support samples, so the function inferes the episode classes from the target list, randomly extracts `n_support` samples for each class, computes their class barycentre, computes the distances of each remaining samples' embeddings from each class barycentre and compute the probability of each samples of belonging to each episode class; The loss is then computed from the wrong predictions probabilities (for the query smaples) as usual in classification problems.
+In particular, the functions takes in input the batch output from the model, the samples ground truths and the number `n_suppport` of samples to be used as support samples, so the function infers the episode classes from the target list, randomly extracts `n_support` samples for each class, computes their class barycentre, computes the distances of each remaining samples' embedding from each class barycentre and compute the probability of each samples of belonging to each episode class; The loss is then computed from the wrong predictions probabilities (for the query samples) as usual in classification problems.
 
 # Training
 
-Please note that the training code is here just for demonstration purposes. It use a pretrained resnet model as feature extractor and train only the last layer as a classifier.
+Please note that the training code is here just for demonstration purposes. It use a pre-trained resnet model imported from the [torchvision](https://github.com/pytorch/vision/tree/master/torchvision) package as feature extractor and train only the last layer as a classifier.
