@@ -50,10 +50,11 @@ class OmniglotDataset(data.Dataset):
         if not self._check_exists():
             raise RuntimeError('Dataset not found. You can use download=True to download it')
 
-        self.all_items = find_classes(
-            os.path.join(self.root, self.processed_folder))
+        self.all_items = find_classes(os.path.join(self.root, self.processed_folder))
         self.idx_classes = index_classes(self.all_items)
+
         self.y = [self.get_path_label(pl)[1] for pl in range(self.__len__())]
+
         self.x = map(cv2.imread, [self.get_path_label(pl)[0] for pl in range(self.__len__())], [cv2.IMREAD_GRAYSCALE]*self.__len__())
         self.x = list(self.x)
 
@@ -129,7 +130,7 @@ def find_classes(root_dir):
                 r = root.split('/')
                 lr = len(r)
                 retour.append((f, r[lr-2]+"/"+r[lr-1], root))
-    print("== Found %d items " % len(retour))
+    print("== Dataset: Found %d items " % len(retour))
     return retour
 
 
@@ -138,5 +139,5 @@ def index_classes(items):
     for i in items:
         if (not i[1] in idx):
             idx[i[1]] = len(idx)
-    print("== Found %d classes" % len(idx))
+    print("== Dataset: Found %d classes" % len(idx))
     return idx
