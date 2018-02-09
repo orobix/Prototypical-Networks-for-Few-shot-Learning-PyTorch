@@ -102,7 +102,6 @@ def train(opt, tr_dataloader, val_dataloader, model, optim, lr_scheduler):
     val_acc = []
     best_acc = 0
 
-    # train
     for epoch in range(opt.epochs):
         print('=== Epoch: {} ==='.format(epoch))
         tr_iter = iter(tr_dataloader)
@@ -139,6 +138,8 @@ def train(opt, tr_dataloader, val_dataloader, model, optim, lr_scheduler):
             best_acc = avg_acc
 
         lr_scheduler.step()
+
+    return best_acc, train_loss, train_acc, val_loss, val_acc
 
 
 def main():
