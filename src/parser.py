@@ -1,4 +1,4 @@
-# encodig: utf8
+# coding=utf-8
 import argparse
 
 

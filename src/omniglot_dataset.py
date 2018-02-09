@@ -4,7 +4,7 @@ import os
 import os.path
 import errno
 import cv2
-# encodig: utf8
+# coding=utf-8
 import numpy as np
 
 '''

@@ -1,4 +1,4 @@
-# encodig: utf8
+# coding=utf-8
 from prototypical_batch_sampler import PrototypicalBatchSampler
 from omniglot_dataset import OmniglotDataset
 from torchvision.models.resnet import resnet18 as resnet
