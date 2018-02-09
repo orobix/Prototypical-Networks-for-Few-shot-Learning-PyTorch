@@ -1,3 +1,4 @@
+# encodig: utf8
 import torch
 import numpy as np
 from torch.autograd import Variable
@@ -10,6 +11,7 @@ class PrototypicalLoss(Module):
     '''
     Class à la PyTorch for the prototypical loss function defined below
     '''
+
     def __init__(self, n_support):
         super(PrototypicalLoss, self).__init__()
         self.n_support = n_support
@@ -67,7 +69,8 @@ def prototypical_loss(input, target, n_support):
     prototypes = [cpuinput[i].mean(0).data.numpy().tolist() for i in os_idxs]
     prototypes = Variable(torch.FloatTensor(prototypes))
 
-    oq_idxs = map(lambda c: np.where(cputargs.numpy() == c)[0][n_support:], classes)
+    oq_idxs = map(lambda c: np.where(cputargs.numpy() == c)
+                  [0][n_support:], classes)
     oq = input[np.array(list(oq_idxs)).flatten()]
 
     prototypes = prototypes.cuda() if target.is_cuda else prototypes

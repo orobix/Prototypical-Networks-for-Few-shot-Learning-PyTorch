@@ -4,6 +4,7 @@ import os
 import os.path
 import errno
 import cv2
+# encodig: utf8
 import numpy as np
 
 '''
@@ -48,14 +49,17 @@ class OmniglotDataset(data.Dataset):
             self.download()
 
         if not self._check_exists():
-            raise RuntimeError('Dataset not found. You can use download=True to download it')
+            raise RuntimeError(
+                'Dataset not found. You can use download=True to download it')
 
-        self.all_items = find_classes(os.path.join(self.root, self.processed_folder))
+        self.all_items = find_classes(
+            os.path.join(self.root, self.processed_folder))
         self.idx_classes = index_classes(self.all_items)
 
         self.y = [self.get_path_label(pl)[1] for pl in range(self.__len__())]
 
-        self.x = map(cv2.imread, [self.get_path_label(pl)[0] for pl in range(self.__len__())], [cv2.IMREAD_GRAYSCALE]*self.__len__())
+        self.x = map(cv2.imread, [self.get_path_label(pl)[0] for pl in range(
+            self.__len__())], [cv2.IMREAD_GRAYSCALE] * self.__len__())
         self.x = list(self.x)
 
         split_size = DSET_SPLIT_SIZES[mode]
@@ -115,7 +119,7 @@ class OmniglotDataset(data.Dataset):
             with open(file_path, 'wb') as f:
                 f.write(data.read())
             file_processed = os.path.join(self.root, self.processed_folder)
-            print("== Unzip from "+file_path+" to "+file_processed)
+            print("== Unzip from " + file_path + " to " + file_processed)
             zip_ref = zipfile.ZipFile(file_path, 'r')
             zip_ref.extractall(file_processed)
             zip_ref.close()
@@ -129,7 +133,7 @@ def find_classes(root_dir):
             if (f.endswith("png")):
                 r = root.split('/')
                 lr = len(r)
-                retour.append((f, r[lr-2]+"/"+r[lr-1], root))
+                retour.append((f, r[lr - 2] + "/" + r[lr - 1], root))
     print("== Dataset: Found %d items " % len(retour))
     return retour
 
