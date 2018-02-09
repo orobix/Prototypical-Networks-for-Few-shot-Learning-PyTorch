@@ -27,6 +27,19 @@ def euclidean_dist(x, y):
 
 
 def prototypical_loss(output, target, n_support):
+    '''
+    Compute the barycentres by averaging the features of n_support
+    samples for each class in target, computes then the distances from each
+    samples' features to each one of the barycentres, computes the
+    log_probability for each n_query samples for each one of the current
+    classes, of appartaining to a class c, loss and accuracy are then computed
+    and returned
+    Args:
+    - output: the model output for a batch of samples
+    - target: ground truth for the above batch of samples
+    - n_support: number of samples to keep in account when computing
+      barycentres, for each one of the current classes
+    '''
     cputargs = target.cpu() if target.is_cuda else target
     cputargs = cputargs.data
     cpuoutput = output.cpu() if target.is_cuda else output
