@@ -135,7 +135,7 @@ def train(opt, tr_dataloader, val_dataloader, model, optim, lr_scheduler):
         postfix = ' (Best)' if avg_acc > best_acc else ''
         print('Val Loss: {}, Val Acc: {}{}'.format(avg_loss, avg_acc, postfix))
         if avg_acc > best_acc:
-            torch.save(model.fc.state_dict(), '../best_model.t7')
+            torch.save(model.fc.state_dict(), '../best_model.pth')
             best_acc = avg_acc
 
         lr_scheduler.step()
