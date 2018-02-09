@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from torch.autograd import Variable
 from torch.nn import functional as F
-from torch.nn.module import Module
+from torch.nn.modules import Module
 from torch.nn.modules.loss import _assert_no_grad
 
 

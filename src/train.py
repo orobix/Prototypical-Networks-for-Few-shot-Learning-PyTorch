@@ -4,7 +4,6 @@ from omniglot_dataset import OmniglotDataset
 from torchvision.models.resnet import resnet18 as resnet
 from torch import nn
 import torch
-import torch.backends.cudnn as cudnn
 from prototypical_loss import prototypical_loss as loss
 from torch.autograd import Variable
 from torchvision import transforms
@@ -20,7 +19,6 @@ def init_seed(opt):
     torch.cuda.cudnn_enabled = False
     torch.manual_seed(opt.manual_seed)
     torch.cuda.manual_seed(opt.manual_seed)
-    cudnn.benchmark = True
 
 
 def init_dataset(opt):

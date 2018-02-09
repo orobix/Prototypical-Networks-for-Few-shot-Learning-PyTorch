@@ -9,7 +9,7 @@ def get_parser():
                         help='path to dataset',
                         default='../dataset')
 
-    parser.add_argument('-nep', '--nepochs',
+    parser.add_argument('-nep', '--epochs',
                         type=int,
                         help='number of epochs to train for',
                         default=10000)
