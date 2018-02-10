@@ -36,6 +36,25 @@ In particular, the functions takes in input the batch input from the model, the 
 
 Please note that the training code is here just for demonstration purposes. It use a pre-trained resnet model imported from the [torchvision](https://github.com/pytorch/vision/tree/master/torchvision) package as feature extractor and train only the last layer as a classifier.
 
+## .bib citation
+cite the paper as follows (copied-pasted it from arxiv for you):
+
+    @article{DBLP:journals/corr/SnellSZ17,
+      author    = {Jake Snell and
+                   Kevin Swersky and
+                   Richard S. Zemel},
+      title     = {Prototypical Networks for Few-shot Learning},
+      journal   = {CoRR},
+      volume    = {abs/1703.05175},
+      year      = {2017},
+      url       = {http://arxiv.org/abs/1703.05175},
+      archivePrefix = {arXiv},
+      eprint    = {1703.05175},
+      timestamp = {Wed, 07 Jun 2017 14:41:38 +0200},
+      biburl    = {http://dblp.org/rec/bib/journals/corr/SnellSZ17},
+      bibsource = {dblp computer science bibliography, http://dblp.org}
+    }
+
 
 ## License
 
