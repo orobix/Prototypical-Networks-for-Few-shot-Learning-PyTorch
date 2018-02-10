@@ -30,7 +30,7 @@ Compute the loss as in the cited paper, mostly inspired by [this code](https://g
 
 In [`prototypical_loss.py`](src/prototypical_loss.py) both loss function and loss class à la PyTorch are implemented. 
 
-In particular, the functions takes in input the batch input from the model, the samples ground truths and the number `n_suppport` of samples to be used as support samples, so the function infers the episode classes from the target list, randomly extracts `n_support` samples for each class, computes their class barycentre, computes the distances of each remaining samples' embedding from each class barycentre and compute the probability of each samples of belonging to each episode class; the loss is then computed from the wrong predictions probabilities (for the query samples) as usual in classification problems.
+The function takes in input the batch input from the model, samples' ground truths and the number `n_suppport` of samples to be used as support samples. Episode classes get infered from the target list, `n_support` samples get randomly extracted for each class, their class barycentres get computed, as well as the distances of each remaining samples' embedding from each class barycentre and the probability of each sample of belonging to each episode class get finmally computed; then the loss is then computed from the wrong predictions probabilities (for the query samples) as usual in classification problems.
 
 ## Training
 
