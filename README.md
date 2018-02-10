@@ -1,5 +1,5 @@
 # Prototypical Networks for Few shot Learning in PyTorch
-Simple Implementation of Prototypical Networks for Few Shot Learning (https://arxiv.org/abs/1703.05175) in Pytorch
+Simple alternative Implementation of Prototypical Networks for Few Shot Learning ([paper](https://arxiv.org/abs/1703.05175), [code](https://github.com/jakesnell/prototypical-networks)) in PyTorch.
 
 ## Prototypical Networks
 
