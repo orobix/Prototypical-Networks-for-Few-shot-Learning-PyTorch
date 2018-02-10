@@ -22,7 +22,7 @@ We will use the official dataset when it will be added to torchvision if it does
 
 As described in its PyDoc, this class is used to generate the indexes of each batch for a prototypical training algorithm.
 
-In particular, the object is instantiated by passing the list of the labels for the dataset, the sampler infers then the total number of classes and creates a set of indexes for each class ni the dataset. At each episode the sampler selects 'n_classes' random classes and returns a number (n_support + n_query) of samples indexes for each one of the selected classes.
+In particular, the object is instantiated by passing the list of the labels for the dataset, the sampler infers then the total number of classes and creates a set of indexes for each class ni the dataset. At each episode the sampler selects `n_classes` random classes and returns a number (n_support + n_query) of samples indexes for each one of the selected classes.
 
 ## Prototypical Loss
 
