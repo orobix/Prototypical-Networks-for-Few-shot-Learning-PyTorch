@@ -36,6 +36,10 @@ The function takes in input the batch input from the model, samples' ground trut
 
 Please note that the training code is here just for demonstration purposes. It use a pre-trained resnet model imported from the [torchvision](https://github.com/pytorch/vision/tree/master/torchvision) package as feature extractor and trains only the last layer as a classifier.
 
+## Helpful links
+
+ - http://pytorch.org/docs/master/data.html: Official PyTroch documentation about Dataset classes, Dataloaders and Samplers
+
 ## .bib citation
 cite the paper as follows (copied-pasted it from arxiv for you):
 
