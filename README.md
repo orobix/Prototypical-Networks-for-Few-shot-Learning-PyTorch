@@ -20,7 +20,7 @@ We will use the official dataset when it will be added to torchvision if it does
 
 ## Dataset split
 
-We implemented the Vynials splitting method as in [[Matching Networks for One Shot Learning](https://papers.nips.cc/paper/6385-matching-networks-for-one-shot-learning)]. That sould be the same method used in the paper (in fact I download the split files from the "offical" [repo](https://github.com/jakesnell/prototypical-networks/tree/master/data/omniglot/splits/vinyals)) and apply the same rotations there described. In this way we should be able to compare results obtained by running this code with results obtained and shown in the reference paper (TODO).
+We implemented the Vynials splitting method as in [[Matching Networks for One Shot Learning](https://papers.nips.cc/paper/6385-matching-networks-for-one-shot-learning)]. That sould be the same method used in the paper (in fact I download the split files from the "offical" [repo](https://github.com/jakesnell/prototypical-networks/tree/master/data/omniglot/splits/vinyals)). We then apply the same rotations there described. In this way we should be able to compare results obtained by running this code with results obtained and shown in the reference paper (TODO).
 
 ## Prototypical Batch Sampler
 
