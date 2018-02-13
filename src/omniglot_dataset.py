@@ -1,7 +1,7 @@
 from __future__ import print_function
 import torch.utils.data as data
 import os
-import os.path
+import re
 import errno
 import cv2
 # coding=utf-8
@@ -21,25 +21,32 @@ DSET_SPLIT_SIZES = {
 
 
 class OmniglotDataset(data.Dataset):
+    vinalys_baseurl = 'https://raw.githubusercontent.com/jakesnell/prototypical-networks/master/data/omniglot/splits/vinyals/'
+    vinyals_split_sizes = {
+        'test': vinalys_baseurl + 'test.txt',
+        'train': vinalys_baseurl + 'train.txt',
+        'trainval': vinalys_baseurl + 'trainval.txt',
+        'val': vinalys_baseurl + 'val.txt',
+    }
+
     urls = [
         'https://github.com/brendenlake/omniglot/raw/master/python/images_background.zip',
         'https://github.com/brendenlake/omniglot/raw/master/python/images_evaluation.zip'
     ]
+    splits_folder = os.path.join('splits', 'vinyals')
     raw_folder = 'raw'
     processed_folder = 'processed'
-    training_file = 'training.pt'
-    test_file = 'test.pt'
 
-    '''
-    The items are (filename,category). The index of all the categories can be found in self.idx_classes
-    Args:
-    - root: the directory where the dataset will be stored
-    - transform: how to transform the input
-    - target_transform: how to transform the target
-    - download: need to download the dataset
-    '''
+    def __init__(self, mode='train', root='../dataset', transform=None, target_transform=None, download=True):
 
-    def __init__(self, mode='train', root='../dataset', transform=None, target_transform=None, download=False):
+        '''
+        The items are (filename,category). The index of all the categories can be found in self.idx_classes
+        Args:
+        - root: the directory where the dataset will be stored
+        - transform: how to transform the input
+        - target_transform: how to transform the target
+        - download: need to download the dataset
+        '''
         super(OmniglotDataset, self).__init__()
         self.root = root
         self.transform = transform
@@ -52,25 +59,20 @@ class OmniglotDataset(data.Dataset):
             raise RuntimeError(
                 'Dataset not found. You can use download=True to download it')
 
-        self.all_items = find_classes(
-            os.path.join(self.root, self.processed_folder))
+        self.classes = get_current_classes(os.path.join(self.root, self.splits_folder, mode + '.txt'))
+
+        self.all_items = find_classes(os.path.join(self.root, self.processed_folder), self.classes)
         self.idx_classes = index_classes(self.all_items)
 
-        self.y = [self.get_path_label(pl)[1] for pl in range(self.__len__())]
+        paths, self.y = zip(*[self.get_path_label(pl) for pl in range(len(self))])
 
-        self.x = map(cv2.imread, [self.get_path_label(pl)[0] for pl in range(
-            self.__len__())], [cv2.IMREAD_GRAYSCALE] * self.__len__())
+        self.x = map(load_img, paths, range(len(paths)))
         self.x = list(self.x)
-
-        split_size = DSET_SPLIT_SIZES[mode]
-        l1 = int(len(self.x) * split_size[0])
-        l2 = int(len(self.x) * split_size[1])
-        self.x = self.x[l1:l2]
-        self.y = self.y[l1:l2]
 
     def __getitem__(self, idx):
         x = self.x[idx]
-        x = cv2.resize(x, (128, 128))
+        # x = cv2.rotate(x, idx % 4 * 90)
+        # x = cv2.resize(x, (28, 28))
         x = np.expand_dims(x, 2)
         if self.transform:
             x = self.transform(x)
@@ -90,9 +92,10 @@ class OmniglotDataset(data.Dataset):
         return img, target
 
     def _check_exists(self):
-        return os.path.exists(os.path.join(self.root, self.processed_folder, "images_evaluation")) and \
-            os.path.exists(os.path.join(
-                self.root, self.processed_folder, "images_background"))
+        images_evaluation_path = os.path.join(self.root, self.processed_folder, "images_evaluation")
+        images_background_path = os.path.join(self.root, self.processed_folder, "images_background")
+        return os.path.exists(images_evaluation_path) and \
+            os.path.exists(images_background_path)
 
     def download(self):
         from six.moves import urllib
@@ -103,6 +106,7 @@ class OmniglotDataset(data.Dataset):
 
         # download files
         try:
+            os.makedirs(os.path.join(self.root, self.splits_folder))
             os.makedirs(os.path.join(self.root, self.raw_folder))
             os.makedirs(os.path.join(self.root, self.processed_folder))
         except OSError as e:
@@ -110,6 +114,14 @@ class OmniglotDataset(data.Dataset):
                 pass
             else:
                 raise
+
+        for k, url in self.vinyals_split_sizes.items():
+            print('== Downloading ' + url)
+            data = urllib.request.urlopen(url)
+            filename = url.rpartition('/')[-1]
+            file_path = os.path.join(self.root, self.splits_folder, filename)
+            with open(file_path, 'wb') as f:
+                f.write(data.read())
 
         for url in self.urls:
             print('== Downloading ' + url)
@@ -126,14 +138,16 @@ class OmniglotDataset(data.Dataset):
         print("Download finished.")
 
 
-def find_classes(root_dir):
+def find_classes(root_dir, classes):
     retour = []
+    rots = [0, 90, 180, 270]
     for (root, dirs, files) in os.walk(root_dir):
         for f in files:
-            if (f.endswith("png")):
-                r = root.split('/')
-                lr = len(r)
-                retour.append((f, r[lr - 2] + "/" + r[lr - 1], root))
+            r = root.split('/')
+            lr = len(r)
+            label = r[lr - 2] + "/" + r[lr - 1]
+            if label in classes and (f.endswith("png")):
+                retour.extend([(f, label, root, rot) for rot in rots])
     print("== Dataset: Found %d items " % len(retour))
     return retour
 
@@ -145,3 +159,17 @@ def index_classes(items):
             idx[i[1]] = len(idx)
     print("== Dataset: Found %d classes" % len(idx))
     return idx
+
+
+def get_current_classes(fname):
+    f = open(fname)
+    classes = list(set([re.match('.*/', line).group(0)[:-1] for line in f]))
+    f.close()
+    return classes
+
+
+def load_img(path, idx):
+    x = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+    x = np.rot90(x, k=(idx % 4 * 90))
+    x = cv2.resize(x, (28, 28))
+    return x
