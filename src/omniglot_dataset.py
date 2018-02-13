@@ -1,11 +1,11 @@
+# coding=utf-8
 from __future__ import print_function
 import torch.utils.data as data
+import numpy as np
+import errno
 import os
 import re
-import errno
 import cv2
-# coding=utf-8
-import numpy as np
 
 '''
 Inspired by https://github.com/pytorch/vision/pull/46
@@ -71,8 +71,6 @@ class OmniglotDataset(data.Dataset):
 
     def __getitem__(self, idx):
         x = self.x[idx]
-        # x = cv2.rotate(x, idx % 4 * 90)
-        # x = cv2.resize(x, (28, 28))
         x = np.expand_dims(x, 2)
         if self.transform:
             x = self.transform(x)
@@ -104,7 +102,6 @@ class OmniglotDataset(data.Dataset):
         if self._check_exists():
             return
 
-        # download files
         try:
             os.makedirs(os.path.join(self.root, self.splits_folder))
             os.makedirs(os.path.join(self.root, self.raw_folder))
