@@ -12,7 +12,7 @@ def get_parser():
     parser.add_argument('-nep', '--epochs',
                         type=int,
                         help='number of epochs to train for',
-                        default=10000)
+                        default=100)
 
     parser.add_argument('-lr', '--learning_rate',
                         type=float,
@@ -62,7 +62,7 @@ def get_parser():
     parser.add_argument('-nqVa', '--num_query_val',
                         type=int,
                         help='number of samples per class to use as query for validation, default=15',
-                        default=5)
+                        default=15)
 
     parser.add_argument('-seed', '--manual_seed',
                         type=int,
