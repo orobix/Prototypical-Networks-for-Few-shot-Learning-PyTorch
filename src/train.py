@@ -1,15 +1,13 @@
 # coding=utf-8
 from prototypical_batch_sampler import PrototypicalBatchSampler
 from omniglot_dataset import OmniglotDataset
-from torchvision.models.resnet import resnet18 as resnet
-from torch import nn
+from protonet import ProtoNet
 import torch
 from prototypical_loss import prototypical_loss as loss
 from torch.autograd import Variable
-from torchvision import transforms
 import numpy as np
-from tqdm import tqdm
 from parser import get_parser
+from tqdm import tqdm
 
 
 def init_seed(opt):
@@ -61,16 +59,12 @@ def init_dataset(opt):
     return tr_dataloader, val_dataloader
 
 
-def init_model(opt):
+
+def init_protonet(opt):
     '''
-    Initialize the pre-trained resnet
+    Initialize the ProtoNet
     '''
-    model = resnet(pretrained=True)
-    model.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-    model.conv1.weight.data = model.conv1.weight.data.sum(1).unsqueeze(1)
-    for param in model.parameters():
-        param.requires_grad = False
-    model.fc = nn.Linear(model.fc.in_features, 64)
+    model = ProtoNet()
     model = model.cuda() if opt.cuda else model
     return model
 
