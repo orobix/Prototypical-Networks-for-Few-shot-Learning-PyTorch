@@ -4,20 +4,15 @@ import torch.utils.data as data
 import numpy as np
 import errno
 import os
-import re
-import cv2
+from PIL import Image
+import torch
+import shutil
 
 '''
 Inspired by https://github.com/pytorch/vision/pull/46
 '''
 
-DSET_SPLIT_SIZES = {
-    'train': [0, 1],
-    'val': [0, 1],
-    'test': [0, 0],
-    'pred': [0, 1],
-    None: [0, 1],
-}
+IMG_CACHE = {}
 
 
 class OmniglotDataset(data.Dataset):
@@ -35,10 +30,9 @@ class OmniglotDataset(data.Dataset):
     ]
     splits_folder = os.path.join('splits', 'vinyals')
     raw_folder = 'raw'
-    processed_folder = 'processed'
+    processed_folder = 'data'
 
     def __init__(self, mode='train', root='../dataset', transform=None, target_transform=None, download=True):
-
         '''
         The items are (filename,category). The index of all the categories can be found in self.idx_classes
         Args:
@@ -59,19 +53,21 @@ class OmniglotDataset(data.Dataset):
             raise RuntimeError(
                 'Dataset not found. You can use download=True to download it')
 
-        self.classes = get_current_classes(os.path.join(self.root, self.splits_folder, mode + '.txt'))
+        self.classes = get_current_classes(os.path.join(
+            self.root, self.splits_folder, mode + '.txt'))
+        self.all_items = find_items(os.path.join(
+            self.root, self.processed_folder), self.classes)
 
-        self.all_items = find_classes(os.path.join(self.root, self.processed_folder), self.classes)
         self.idx_classes = index_classes(self.all_items)
 
-        paths, self.y = zip(*[self.get_path_label(pl) for pl in range(len(self))])
+        paths, self.y = zip(*[self.get_path_label(pl)
+                              for pl in range(len(self))])
 
         self.x = map(load_img, paths, range(len(paths)))
         self.x = list(self.x)
 
     def __getitem__(self, idx):
         x = self.x[idx]
-        x = np.expand_dims(x, 2)
         if self.transform:
             x = self.transform(x)
         return x, self.y[idx]
@@ -81,19 +77,17 @@ class OmniglotDataset(data.Dataset):
 
     def get_path_label(self, index):
         filename = self.all_items[index][0]
-        img = str.join('/', [self.all_items[index][2], filename])
-
-        target = self.idx_classes[self.all_items[index][1]]
+        rot = self.all_items[index][-1]
+        img = str.join('/', [self.all_items[index][2], filename]) + rot
+        target = self.idx_classes[self.all_items[index]
+                                  [1] + self.all_items[index][-1]]
         if self.target_transform is not None:
             target = self.target_transform(target)
 
         return img, target
 
     def _check_exists(self):
-        images_evaluation_path = os.path.join(self.root, self.processed_folder, "images_evaluation")
-        images_background_path = os.path.join(self.root, self.processed_folder, "images_background")
-        return os.path.exists(images_evaluation_path) and \
-            os.path.exists(images_background_path)
+        return os.path.exists(os.path.join(self.root, self.processed_folder))
 
     def download(self):
         from six.moves import urllib
@@ -127,24 +121,30 @@ class OmniglotDataset(data.Dataset):
             file_path = os.path.join(self.root, self.raw_folder, filename)
             with open(file_path, 'wb') as f:
                 f.write(data.read())
-            file_processed = os.path.join(self.root, self.processed_folder)
-            print("== Unzip from " + file_path + " to " + file_processed)
+            orig_root = os.path.join(self.root, self.raw_folder)
+            print("== Unzip from " + file_path + " to " + orig_root)
             zip_ref = zipfile.ZipFile(file_path, 'r')
-            zip_ref.extractall(file_processed)
+            zip_ref.extractall(orig_root)
             zip_ref.close()
+        file_processed = os.path.join(self.root, self.processed_folder)
+        for p in ['images_background', 'images_evaluation']:
+            for f in os.listdir(os.path.join(orig_root, p)):
+                shutil.move(os.path.join(orig_root, p, f), file_processed)
+            os.rmdir(os.path.join(orig_root, p))
         print("Download finished.")
 
 
-def find_classes(root_dir, classes):
+def find_items(root_dir, classes):
     retour = []
-    rots = [0, 90, 180, 270]
+    rots = ['/rot000', '/rot090', '/rot180', '/rot270']
     for (root, dirs, files) in os.walk(root_dir):
         for f in files:
             r = root.split('/')
             lr = len(r)
             label = r[lr - 2] + "/" + r[lr - 1]
-            if label in classes and (f.endswith("png")):
-                retour.extend([(f, label, root, rot) for rot in rots])
+            for rot in rots:
+                if label + rot in classes and (f.endswith("png")):
+                    retour.extend([(f, label, root, rot)])
     print("== Dataset: Found %d items " % len(retour))
     return retour
 
@@ -152,21 +152,31 @@ def find_classes(root_dir, classes):
 def index_classes(items):
     idx = {}
     for i in items:
-        if (not i[1] in idx):
-            idx[i[1]] = len(idx)
+        if (not i[1] + i[-1] in idx):
+            idx[i[1] + i[-1]] = len(idx)
     print("== Dataset: Found %d classes" % len(idx))
     return idx
 
 
 def get_current_classes(fname):
-    f = open(fname)
-    classes = list(set([re.match('.*/', line).group(0)[:-1] for line in f]))
-    f.close()
+    with open(fname) as f:
+        classes = f.read().splitlines()
     return classes
 
 
 def load_img(path, idx):
-    x = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
-    x = np.rot90(x, k=(idx % 4 * 90))
-    x = cv2.resize(x, (28, 28))
+    path, rot = path.split('/rot')
+    if path in IMG_CACHE:
+        x = IMG_CACHE[path]
+    else:
+        x = Image.open(path)
+        IMG_CACHE[path] = x
+    x = x.rotate(float(rot))
+    x = x.resize((28, 28))
+
+    shape = 1, x.size[0], x.size[1]
+    x = np.array(x, np.float32, copy=False)
+    x = 1.0 - torch.from_numpy(x)
+    x = x.transpose(0, 1).contiguous().view(shape)
+
     return x
