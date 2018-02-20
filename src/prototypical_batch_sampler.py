@@ -1,5 +1,6 @@
 # coding=utf-8
 import numpy as np
+import torch
 
 
 class PrototypicalBatchSampler(object):
@@ -9,7 +10,7 @@ class PrototypicalBatchSampler(object):
     In fact at every iteration the batch indexes will refer to  'num_support' + 'num_query' samples
     for 'classes_per_it' random classes.
 
-    __len__ returns the number of episodes per epoch (same as 'iterations').
+    __len__ returns the number of episodes per epoch (same as 'self.iterations').
     '''
 
     def __init__(self, labels, classes_per_it, num_support, num_query, iterations):
@@ -30,26 +31,30 @@ class PrototypicalBatchSampler(object):
         self.iterations = iterations
 
         self.classes, self.counts = np.unique(self.labels, return_counts=True)
+        self.classes = torch.LongTensor(self.classes)
+
         self.idxs = range(len(self.labels))
-        self.ndclasses = np.empty((len(self.classes), max(self.counts)), dtype=int) * np.nan
+        self.label_tens = np.empty((len(self.classes), max(self.counts)), dtype=int) * np.nan
+        self.label_tens = torch.Tensor(self.label_tens)
         for idx, label in enumerate(self.labels):
-            self.ndclasses[label, np.where(np.isnan(self.ndclasses[label]))[0][0]] = idx
+            self.label_tens[label, np.where(np.isnan(self.label_tens[label]))[0][0]] = idx
 
     def __iter__(self):
         '''
         yield a batch of indexes
         '''
+        cpi = self.classes_per_it
+        spc = self.sample_per_class
+
         for it in range(self.iterations):
-            batch = np.zeros(
-                (self.sample_per_class * self.classes_per_it), dtype=int)
-            curr_classes = np.random.choice(
-                self.classes, self.classes_per_it, replace=False)
-            for i, c in enumerate(curr_classes):
-                s = slice(i * self.sample_per_class,
-                          (i + 1) * self.sample_per_class)
-                batch[s] = np.random.choice(
-                    self.ndclasses[c], self.sample_per_class, replace=False)
-            np.random.shuffle(batch)
+            batch_size = spc * cpi
+            batch = torch.LongTensor(batch_size)
+            c_idxs = torch.randperm(len(self.classes))[:cpi]
+            for i, c in enumerate(self.classes[c_idxs]):
+                s = slice(i * spc, (i + 1) * spc)
+                sample_idxs = torch.randperm(len(self.label_tens[c]))[:spc]
+                batch[s] = self.label_tens[c][sample_idxs]
+            batch = batch[torch.randperm(len(batch))]
             yield batch
 
     def __len__(self):
