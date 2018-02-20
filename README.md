@@ -40,6 +40,17 @@ The function takes in input the batch input from the model, samples' ground trut
 
 Please note that the training code is here just for demonstration purposes. It use a pre-trained resnet model imported from the [torchvision](https://github.com/pytorch/vision/tree/master/torchvision) package as feature extractor and trains only the last layer as a classifier.
 
+## Performances
+
+We are trying to reproduce the reference paper performaces, we'll update here our best results. 
+
+| Model | 1-shot (5-way Acc.) | 5-shot (5-way Acc.) | 1 -shot (20-way Acc.) | 5-shot (20-way Acc.)|
+| --- | --- | --- | --- | --- |
+| Reference Paper | 98.8% | 99.7% | 96.0% | 98.9%|
+| This repo | WIP | [99.6%](https://drive.google.com/open?id=1XER62U1Fq0Ar3z7fovekCtgRscdOF-T0) | WIP | WIP |
+
+
+
 ## Helpful links
 
  - http://pytorch.org/docs/master/data.html: Official PyTroch documentation about Dataset classes, Dataloaders and Samplers
