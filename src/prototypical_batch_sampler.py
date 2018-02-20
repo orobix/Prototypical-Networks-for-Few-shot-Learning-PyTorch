@@ -31,11 +31,9 @@ class PrototypicalBatchSampler(object):
 
         self.classes, self.counts = np.unique(self.labels, return_counts=True)
         self.idxs = range(len(self.labels))
-        self.ndclasses = np.empty(
-            (len(self.classes), max(self.counts)), dtype=int) * np.nan
+        self.ndclasses = np.empty((len(self.classes), max(self.counts)), dtype=int) * np.nan
         for idx, label in enumerate(self.labels):
-            self.ndclasses[label, np.where(
-                np.isnan(self.ndclasses[label]))[0][0]] = idx
+            self.ndclasses[label, np.where(np.isnan(self.ndclasses[label]))[0][0]] = idx
 
     def __iter__(self):
         '''
@@ -51,7 +49,7 @@ class PrototypicalBatchSampler(object):
                           (i + 1) * self.sample_per_class)
                 batch[s] = np.random.choice(
                     self.ndclasses[c], self.sample_per_class, replace=False)
-            # np.random.shuffle(batch) # this should be uselsess (?)
+            np.random.shuffle(batch)
             yield batch
 
     def __len__(self):
