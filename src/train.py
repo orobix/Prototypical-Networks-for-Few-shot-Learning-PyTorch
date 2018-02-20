@@ -130,8 +130,8 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             train_acc.append(acc.data[0])
         avg_loss = np.mean(train_loss[-opt.iterations:])
         avg_acc = np.mean(train_acc[-opt.iterations:])
-        print('Train Loss: {}, Train Acc: {}'.format(l.data[0], acc.data[0]))
-        lr_scheduler.step(-avg_acc)
+        print('Avg Train Loss: {}, Avg Train Acc: {}'.format(avg_loss, avg_acc))
+        lr_scheduler.step()
         if val_dataloader is None:
             continue
         val_iter = iter(val_dataloader)
@@ -174,7 +174,7 @@ def test(opt, test_dataloader, model):
                 x, y = x.cuda(), y.cuda()
             model_output = model(x)
             _, acc = loss(model_output, target=y, n_support=opt.num_support_tr)
-        avg_acc.append(acc.data[0])
+            avg_acc.append(acc.data[0])
     avg_acc = np.mean(avg_acc)
     print('Test Acc: {}'.format(avg_acc))
 
@@ -213,10 +213,10 @@ def main():
          test_dataloader=test_dataloader,
          model=model)
 
-    optim = init_optim(options, model)
-    lr_scheduler = init_lr_scheduler(options, optim)
+    # optim = init_optim(options, model)
+    # lr_scheduler = init_lr_scheduler(options, optim)
 
-    print('Fine-tuning on train+val set..')
+    print('Training on train+val set..')
     train(opt=options,
           tr_dataloader=trainval_dataloader,
           val_dataloader=None,
