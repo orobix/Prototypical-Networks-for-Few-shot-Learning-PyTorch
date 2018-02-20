@@ -87,7 +87,7 @@ We are trying to reproduce the reference paper performaces, we'll update here ou
 | Reference Paper | 98.8% | 99.7% | 96.0% | 98.9%|
 | This repo | WIP | [99.6%*](https://drive.google.com/open?id=1XER62U1Fq0Ar3z7fovekCtgRscdOF-T0) | WIP | WIP |
 
-* achieved using default parameters
+\* achieved using default parameters
 
 
 ## Helpful links
