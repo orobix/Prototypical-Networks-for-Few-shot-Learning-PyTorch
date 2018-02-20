@@ -73,7 +73,7 @@ The script takes the following command line options:
 
 - `manual_seed`: input for the manual seeds initializations, default to `7`
 
-- `cuda`: enables cuda (store True)
+- `cuda`: enables cuda (store `True`)
 
 Running the command without arguments will train the models with the default hyperparamters values (producing results shown above).
 
