@@ -89,7 +89,7 @@ We are trying to reproduce the reference paper performaces, we'll update here ou
 
 \* achieved using default parameters
 
-\*\* achieved running `python train.py --cuda -nep 1000 -nsTr 5 -nsVa 5`
+\*\* achieved running `python train.py --cuda -nep 1000 -nsTr 1 -nsVa 1`
 
 ° achieved running `python train.py --cuda -nep 1000 -nsTr 1 -nsVa 1  -cVa 20`
 
