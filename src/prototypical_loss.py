@@ -60,7 +60,7 @@ def prototypical_loss(input, target, n_support):
     cpuinput = input.cpu() if target.is_cuda else input
 
     def supp_idxs(c):
-        return torch.LongTensor(np.where(cputargs.numpy() == c)[0][:n_support])
+        return torch.nonzero(cputargs.eq(int(c)))[:n_support].squeeze()
 
     classes = np.unique(cputargs)
     n_classes = len(classes)
