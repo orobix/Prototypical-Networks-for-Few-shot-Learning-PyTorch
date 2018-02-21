@@ -85,11 +85,15 @@ We are trying to reproduce the reference paper performaces, we'll update here ou
 | Model | 1-shot (5-way Acc.) | 5-shot (5-way Acc.) | 1 -shot (20-way Acc.) | 5-shot (20-way Acc.)|
 | --- | --- | --- | --- | --- |
 | Reference Paper | 98.8% | 99.7% | 96.0% | 98.9%|
-| This repo | [96.84**](https://drive.google.com/open?id=19REN_AE6VxVbM-4Qt3LBMRa5cRMIy3Kn) | [99.6%*](https://drive.google.com/open?id=1XER62U1Fq0Ar3z7fovekCtgRscdOF-T0) | WIP | WIP |
+| This repo | [96.84**](https://drive.google.com/open?id=19REN_AE6VxVbM-4Qt3LBMRa5cRMIy3Kn) | [99.6%*](https://drive.google.com/open?id=1XER62U1Fq0Ar3z7fovekCtgRscdOF-T0) | [95.10%](https://drive.google.com/open?id=1IxRWXZxEMX80VXecjUXaos8h3PCvKj33) | WIP |
 
 \* achieved using default parameters
 
-\*\* achieved running `python train.py --cuda -lr 0.001 -lrS 100 -nep 300 -lrG 0.1 -nsVa 1 -nsTr 1` 
+\*\* achieved running `python train.py --cuda -lrS 100 -nep 300 -lrG 0.1 -nsVa 1 -nsTr 1`
+
+° achieved running `python train.py --cuda -nep 1000 -nsTr 1 -nsVa 1  -cVa 20`
+
+
 
 ## Helpful links
 
