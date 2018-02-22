@@ -86,10 +86,11 @@ We are trying to reproduce the reference paper performaces, we'll update here ou
 | --- | --- | --- | --- | --- |
 | Reference Paper | 98.8% | 99.7% | 96.0% | 98.9%|
 | This repo | [98.4%**](https://drive.google.com/open?id=1LhUuZopLarjBbScd-_5n7gI_OTwk0zMJ) | [99.6%*](https://drive.google.com/open?id=1XER62U1Fq0Ar3z7fovekCtgRscdOF-T0) | [95.1%°](https://drive.google.com/open?id=1IxRWXZxEMX80VXecjUXaos8h3PCvKj33) | [98.6%°°](https://drive.google.com/open?id=1AOpoiEYpBrY1SORWHuzXfhqtYAyL4bOG) |
+| This repo with random=True | [98.3%**](https://drive.google.com/open?id=1LhUuZopLarjBbScd-_5n7gI_OTwk0zMJ) | [99.6%*](https://drive.google.com/open?id=1XER62U1Fq0Ar3z7fovekCtgRscdOF-T0) | [95.1%°](https://drive.google.com/open?id=1IxRWXZxEMX80VXecjUXaos8h3PCvKj33) | [98.6%°°](https://drive.google.com/open?id=1AOpoiEYpBrY1SORWHuzXfhqtYAyL4bOG) |
 
 \* achieved using default parameters
 
-\*\* achieved running `python train.py --cuda -nep 1000 -nsTr 5 -nsVa 5`
+\*\* achieved running `python train.py --cuda -nep 1000 -nsTr 1 -nsVa 1`
 
 ° achieved running `python train.py --cuda -nep 1000 -nsTr 1 -nsVa 1  -cVa 20`
 
