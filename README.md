@@ -85,7 +85,7 @@ We are trying to reproduce the reference paper performaces, we'll update here ou
 | Model | 1-shot (5-way Acc.) | 5-shot (5-way Acc.) | 1 -shot (20-way Acc.) | 5-shot (20-way Acc.)|
 | --- | --- | --- | --- | --- |
 | Reference Paper | 98.8% | 99.7% | 96.0% | 98.9%|
-| This repo | [98.4%**](https://drive.google.com/open?id=1LhUuZopLarjBbScd-_5n7gI_OTwk0zMJ) | [99.6%*](https://drive.google.com/open?id=1XER62U1Fq0Ar3z7fovekCtgRscdOF-T0) | [95.1%°](https://drive.google.com/open?id=1IxRWXZxEMX80VXecjUXaos8h3PCvKj33) | [98.6%°°](https://drive.google.com/open?id=1AOpoiEYpBrY1SORWHuzXfhqtYAyL4bOG) |
+| This repo | [98.4%**](https://drive.google.com/open?id=1VNUu3QIvG2aqcVjvC3U24so1A3TFSoc3) | [99.6%*](https://drive.google.com/open?id=1XER62U1Fq0Ar3z7fovekCtgRscdOF-T0) | [95.1%°](https://drive.google.com/open?id=1IxRWXZxEMX80VXecjUXaos8h3PCvKj33) | [98.6%°°](https://drive.google.com/open?id=1AOpoiEYpBrY1SORWHuzXfhqtYAyL4bOG) |
 
 \* achieved using default parameters
 
