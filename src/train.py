@@ -8,6 +8,7 @@ from torch.autograd import Variable
 import numpy as np
 from parser import get_parser
 from tqdm import tqdm
+import os
 
 
 def init_seed(opt):
@@ -38,26 +39,24 @@ def init_dataset(opt):
 
     tr_sampler = PrototypicalBatchSampler(labels=train_dataset.y,
                                           classes_per_it=opt.classes_per_it_tr,
-                                          num_support=opt.num_support_tr,
-                                          num_query=opt.num_query_tr,
-                                          iterations=opt.iterations)
+                                          num_samples=opt.num_support_tr + opt.num_query_tr,
+                                          iterations=opt.iterations,
+                                          randomize=False)
 
     val_sampler = PrototypicalBatchSampler(labels=val_dataset.y,
                                            classes_per_it=opt.classes_per_it_val,
-                                           num_support=opt.num_support_val,
-                                           num_query=opt.num_query_val,
+                                           num_samples=opt.num_support_val + opt.num_query_val,
                                            iterations=opt.iterations)
 
     trainval_sampler = PrototypicalBatchSampler(labels=trainval_dataset.y,
                                                 classes_per_it=opt.classes_per_it_tr,
-                                                num_support=opt.num_support_tr,
-                                                num_query=opt.num_query_tr,
-                                                iterations=opt.iterations)
+                                                num_samples=opt.num_support_tr + opt.num_query_tr,
+                                                iterations=opt.iterations,
+                                                randomize=False)
 
     test_sampler = PrototypicalBatchSampler(labels=test_dataset.y,
                                             classes_per_it=opt.classes_per_it_val,
-                                            num_support=opt.num_support_val,
-                                            num_query=opt.num_query_val,
+                                            num_samples=opt.num_support_val + opt.num_query_val,
                                             iterations=opt.iterations)
 
     tr_dataloader = torch.utils.data.DataLoader(train_dataset,
@@ -100,6 +99,12 @@ def init_lr_scheduler(opt, optim):
                                            step_size=opt.lr_scheduler_step)
 
 
+def save_list_to_file(path, thelist):
+    with open(path, 'w') as f:
+        for item in thelist:
+            f.write("%s\n" % item)
+
+
 def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
     '''
     Train the model with the prototypical learning algorithm
@@ -112,6 +117,9 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
     val_acc = []
     best_acc = 0
 
+    best_model_path = os.path.join(opt.experiment_root, 'best_model.pth')
+    last_model_path = os.path.join(opt.experiment_root, 'last_model.pth')
+
     for epoch in range(opt.epochs):
         print('=== Epoch: {} ==='.format(epoch))
         tr_iter = iter(tr_dataloader)
@@ -123,7 +131,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             if opt.cuda:
                 x, y = x.cuda(), y.cuda()
             model_output = model(x)
-            l, acc = loss(model_output, target=y, n_support=opt.num_support_tr)
+            l, acc = loss(model_output, target=y, n_support=opt.num_support_tr, randomize=True)
             l.backward()
             optim.step()
             train_loss.append(l.data[0])
@@ -152,12 +160,16 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
         print('Avg Val Loss: {}, Avg Val Acc: {}{}'.format(
             avg_loss, avg_acc, postfix))
         if avg_acc >= best_acc:
-            torch.save(model.state_dict(), '../best_model.pth')
+            torch.save(model.state_dict(), best_model_path)
             best_acc = avg_acc
             best_state = model.state_dict()
 
-    torch.save(model.state_dict(), '../last_model.pth')
-    return best_state
+    torch.save(model.state_dict(), last_model_path)
+
+    for name in ['train_loss', 'train_acc', 'val_loss', 'val_acc']:
+        save_list_to_file(os.path.join(opt.experiment_root, name + '.txt'), locals()[name])
+
+    return best_state, best_acc, train_loss, train_acc, val_loss, val_acc
 
 
 def test(opt, test_dataloader, model):
@@ -181,11 +193,33 @@ def test(opt, test_dataloader, model):
     return avg_acc
 
 
+def eval(opt):
+    '''
+    Initialize everything and train
+    '''
+    options = get_parser().parse_args()
+
+    if torch.cuda.is_available() and not options.cuda:
+        print("WARNING: You have a CUDA device, so you should probably run with --cuda")
+
+    init_seed(options)
+    test_dataloader = init_dataset(options)[-1]
+    model = init_protonet(options)
+    model_path = os.path.join(opt.experiment_root, 'best_model.pth')
+    model.load_state_dict(torch.load(model_path))
+
+    test(opt=options,
+         test_dataloader=test_dataloader,
+         model=model)
+
+
 def main():
     '''
     Initialize everything and train
     '''
     options = get_parser().parse_args()
+    if not os.path.exists(options.experiment_root):
+        os.makedirs(options.experiment_root)
 
     if torch.cuda.is_available() and not options.cuda:
         print("WARNING: You have a CUDA device, so you should probably run with --cuda")
@@ -196,12 +230,13 @@ def main():
     model = init_protonet(options)
     optim = init_optim(options, model)
     lr_scheduler = init_lr_scheduler(options, optim)
-    best_state = train(opt=options,
-                       tr_dataloader=tr_dataloader,
-                       val_dataloader=val_dataloader,
-                       model=model,
-                       optim=optim,
-                       lr_scheduler=lr_scheduler)
+    res = train(opt=options,
+                tr_dataloader=tr_dataloader,
+                val_dataloader=val_dataloader,
+                model=model,
+                optim=optim,
+                lr_scheduler=lr_scheduler)
+    best_state, best_acc, train_loss, train_acc, val_loss, val_acc = res
     print('Testing with last model..')
     test(opt=options,
          test_dataloader=test_dataloader,
@@ -216,19 +251,19 @@ def main():
     # optim = init_optim(options, model)
     # lr_scheduler = init_lr_scheduler(options, optim)
 
-    print('Training on train+val set..')
-    train(opt=options,
-          tr_dataloader=trainval_dataloader,
-          val_dataloader=None,
-          model=model,
-          optim=optim,
-          lr_scheduler=lr_scheduler)
+    # print('Training on train+val set..')
+    # train(opt=options,
+    #       tr_dataloader=trainval_dataloader,
+    #       val_dataloader=None,
+    #       model=model,
+    #       optim=optim,
+    #       lr_scheduler=lr_scheduler)
 
-    print('Testing final model..')
-    test(opt=options,
-         test_dataloader=test_dataloader,
-         model=model)
+    # print('Testing final model..')
+    # test(opt=options,
+    #      test_dataloader=test_dataloader,
+    #      model=model)
 
 
 if __name__ == '__main__':
-    main()
+    train()

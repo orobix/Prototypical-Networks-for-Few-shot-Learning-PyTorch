@@ -13,22 +13,23 @@ class PrototypicalBatchSampler(object):
     __len__ returns the number of episodes per epoch (same as 'self.iterations').
     '''
 
-    def __init__(self, labels, classes_per_it, num_support, num_query, iterations):
+    def __init__(self, labels, classes_per_it, num_samples, iterations, randomize=False):
         '''
         Initialize the PrototypicalBatchSampler object
         Args:
         - labels: an iterable containing all the labels for the current dataset
         samples indexes will be infered from this iterable.
         - classes_per_it: number of random classes for each iteration
-        - num_support: number of support samples for each iteration for each class
-        - num_query: number of query samples for each iteration for each class
+        - num_samples: number of samples for each iteration for each class (support + query)
         - iterations:number of iterations (episodes) per epoch
         '''
         super(PrototypicalBatchSampler, self).__init__()
         self.labels = labels
         self.classes_per_it = classes_per_it
-        self.sample_per_class = num_support + num_query
+        self.sample_per_class = num_samples
         self.iterations = iterations
+
+        self.randomize = randomize
 
         self.classes, self.counts = np.unique(self.labels, return_counts=True)
         self.classes = torch.LongTensor(self.classes)
@@ -43,10 +44,10 @@ class PrototypicalBatchSampler(object):
         '''
         yield a batch of indexes
         '''
-        cpi = self.classes_per_it
         spc = self.sample_per_class
 
         for it in range(self.iterations):
+            cpi = np.random.randint(self.classes_per_it - 10, self.classes_per_it + 10) if self.randomize else self.classes_per_it
             batch_size = spc * cpi
             batch = torch.LongTensor(batch_size)
             c_idxs = torch.randperm(len(self.classes))[:cpi]
