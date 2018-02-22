@@ -9,6 +9,11 @@ def get_parser():
                         help='path to dataset',
                         default='../dataset')
 
+    parser.add_argument('-exp', '--experiment_root',
+                        type=str,
+                        help='root where to store models, losses and accuracies',
+                        default='../output')
+
     parser.add_argument('-nep', '--epochs',
                         type=int,
                         help='number of epochs to train for',
