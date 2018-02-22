@@ -131,7 +131,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             if opt.cuda:
                 x, y = x.cuda(), y.cuda()
             model_output = model(x)
-            l, acc = loss(model_output, target=y, n_support=opt.num_support_tr, randomize=True)
+            l, acc = loss(model_output, target=y, n_support=opt.num_support_tr, randomize=False)
             l.backward()
             optim.step()
             train_loss.append(l.data[0])
