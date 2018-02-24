@@ -13,7 +13,7 @@ class PrototypicalBatchSampler(object):
     __len__ returns the number of episodes per epoch (same as 'self.iterations').
     '''
 
-    def __init__(self, labels, classes_per_it, num_samples, iterations, randomize=False):
+    def __init__(self, labels, classes_per_it, num_samples, iterations):
         '''
         Initialize the PrototypicalBatchSampler object
         Args:
@@ -29,8 +29,6 @@ class PrototypicalBatchSampler(object):
         self.sample_per_class = num_samples
         self.iterations = iterations
 
-        self.randomize = randomize
-
         self.classes, self.counts = np.unique(self.labels, return_counts=True)
         self.classes = torch.LongTensor(self.classes)
 
@@ -45,9 +43,9 @@ class PrototypicalBatchSampler(object):
         yield a batch of indexes
         '''
         spc = self.sample_per_class
+        cpi = self.classes_per_it
 
         for it in range(self.iterations):
-            cpi = np.random.randint(self.classes_per_it - 10, self.classes_per_it + 10) if self.randomize else self.classes_per_it
             batch_size = spc * cpi
             batch = torch.LongTensor(batch_size)
             c_idxs = torch.randperm(len(self.classes))[:cpi]
