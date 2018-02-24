@@ -39,7 +39,7 @@ def euclidean_dist(x, y):
     return torch.pow(x - y, 2).sum(2)
 
 
-def prototypical_loss(input, target, n_support, randomize=False):
+def prototypical_loss(input, target, n_support):
     '''
     Inspired by https://github.com/jakesnell/prototypical-networks/blob/master/protonets/models/few_shot.py
 
@@ -58,9 +58,6 @@ def prototypical_loss(input, target, n_support, randomize=False):
     cputargs = target.cpu() if target.is_cuda else target
     cputargs = cputargs.data
     cpuinput = input.cpu() if target.is_cuda else input
-
-    if randomize and n_support > 1:
-        n_support = np.random.randint(1, n_support)
 
     def supp_idxs(c):
         return torch.nonzero(cputargs.eq(int(c)))[:n_support].squeeze()
