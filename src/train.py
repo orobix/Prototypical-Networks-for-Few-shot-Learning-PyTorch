@@ -40,8 +40,7 @@ def init_dataset(opt):
     tr_sampler = PrototypicalBatchSampler(labels=train_dataset.y,
                                           classes_per_it=opt.classes_per_it_tr,
                                           num_samples=opt.num_support_tr + opt.num_query_tr,
-                                          iterations=opt.iterations,
-                                          randomize=False)
+                                          iterations=opt.iterations)
 
     val_sampler = PrototypicalBatchSampler(labels=val_dataset.y,
                                            classes_per_it=opt.classes_per_it_val,
@@ -51,8 +50,7 @@ def init_dataset(opt):
     trainval_sampler = PrototypicalBatchSampler(labels=trainval_dataset.y,
                                                 classes_per_it=opt.classes_per_it_tr,
                                                 num_samples=opt.num_support_tr + opt.num_query_tr,
-                                                iterations=opt.iterations,
-                                                randomize=False)
+                                                iterations=opt.iterations)
 
     test_sampler = PrototypicalBatchSampler(labels=test_dataset.y,
                                             classes_per_it=opt.classes_per_it_val,
@@ -131,7 +129,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             if opt.cuda:
                 x, y = x.cuda(), y.cuda()
             model_output = model(x)
-            l, acc = loss(model_output, target=y, n_support=opt.num_support_tr, randomize=False)
+            l, acc = loss(model_output, target=y, n_support=opt.num_support_tr)
             l.backward()
             optim.step()
             train_loss.append(l.data[0])
@@ -266,4 +264,4 @@ def main():
 
 
 if __name__ == '__main__':
-    train()
+    main()
