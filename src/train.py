@@ -148,7 +148,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             if opt.cuda:
                 x, y = x.cuda(), y.cuda()
             model_output = model(x)
-            l, acc = loss(model_output, target=y, n_support=opt.num_support_tr)
+            l, acc = loss(model_output, target=y, n_support=opt.num_support_val)
             val_loss.append(l.data[0])
             val_acc.append(acc.data[0])
         avg_loss = np.mean(val_loss[-opt.iterations:])
