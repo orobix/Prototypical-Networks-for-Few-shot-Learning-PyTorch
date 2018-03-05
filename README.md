@@ -85,15 +85,15 @@ We are trying to reproduce the reference paper performaces, we'll update here ou
 | Model | 1-shot (5-way Acc.) | 5-shot (5-way Acc.) | 1 -shot (20-way Acc.) | 5-shot (20-way Acc.)|
 | --- | --- | --- | --- | --- |
 | Reference Paper | 98.8% | 99.7% | 96.0% | 98.9%|
-| This repo | [98.5%**](https://drive.google.com/file/d/17BhDQJwQ6WUccOID_u5mKMbXhiS7pfj_) | [99.6%*](https://drive.google.com/open?id=1XER62U1Fq0Ar3z7fovekCtgRscdOF-T0) | [95.1%°](https://drive.google.com/open?id=1IxRWXZxEMX80VXecjUXaos8h3PCvKj33) | [98.6%°°](https://drive.google.com/open?id=1AOpoiEYpBrY1SORWHuzXfhqtYAyL4bOG) |
+| This repo | [98.5%**](https://drive.google.com/file/d/17BhDQJwQ6WUccOID_u5mKMbXhiS7pfj_) | [99.6%*](https://drive.google.com/open?id=1XER62U1Fq0Ar3z7fovekCtgRscdOF-T0) | [95.1%°](https://drive.google.com/open?id=199EUO4Do7Ox3KYfLPVsBhQKyX_AGwerH) | [98.6%°°](https://drive.google.com/open?id=1l6orcZ6DpPQSPXwIlWTesUGbZbetWXU9) |
 
-\* achieved using default parameters
+\* achieved using default parameters (using `--cuda` option)
 
 \*\* achieved running `python train.py --cuda -nsTr 1 -nsVa 1`
 
-° achieved running `python train.py --cuda -nep 1000 -nsTr 1 -nsVa 1  -cVa 20`
+° achieved running `python train.py --cuda -nsTr 1 -nsVa 1 -cVa 20`
 
-°° achieved running `python train.py --cuda -nep 1000 -nsTr 5 -nsVa 5  -cVa 20
+°° achieved running `python train.py --cuda -nsTr 5 -nsVa 5 -cVa 20
 `
 
 
