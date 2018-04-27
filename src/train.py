@@ -4,7 +4,6 @@ from omniglot_dataset import OmniglotDataset
 from protonet import ProtoNet
 import torch
 from prototypical_loss import prototypical_loss as loss
-from torch.autograd import Variable
 import numpy as np
 from parser import get_parser
 from tqdm import tqdm
@@ -75,8 +74,8 @@ def init_protonet(opt):
     '''
     Initialize the ProtoNet
     '''
-    model = ProtoNet()
-    model = model.cuda() if opt.cuda else model
+    device = 'cuda:0' if torch.cuda.is_available() and opt.cuda else 'cpu'
+    model = ProtoNet().to(device)
     return model
 
 
@@ -107,6 +106,9 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
     '''
     Train the model with the prototypical learning algorithm
     '''
+
+    device = 'cuda:0' if torch.cuda.is_available() and opt.cuda else 'cpu'
+
     if val_dataloader is None:
         best_state = None
     train_loss = []
@@ -125,15 +127,13 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
         for batch in tqdm(tr_iter):
             optim.zero_grad()
             x, y = batch
-            x, y = Variable(x), Variable(y)
-            if opt.cuda:
-                x, y = x.cuda(), y.cuda()
+            x, y = x.to(device), y.to(device)
             model_output = model(x)
             l, acc = loss(model_output, target=y, n_support=opt.num_support_tr)
             l.backward()
             optim.step()
-            train_loss.append(l.data[0])
-            train_acc.append(acc.data[0])
+            train_loss.append(l.item())
+            train_acc.append(acc.item())
         avg_loss = np.mean(train_loss[-opt.iterations:])
         avg_acc = np.mean(train_acc[-opt.iterations:])
         print('Avg Train Loss: {}, Avg Train Acc: {}'.format(avg_loss, avg_acc))
@@ -144,13 +144,11 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
         model.eval()
         for batch in val_iter:
             x, y = batch
-            x, y = Variable(x), Variable(y)
-            if opt.cuda:
-                x, y = x.cuda(), y.cuda()
+            x, y = x.to(device), y.to(device)
             model_output = model(x)
             l, acc = loss(model_output, target=y, n_support=opt.num_support_val)
-            val_loss.append(l.data[0])
-            val_acc.append(acc.data[0])
+            val_loss.append(l.item())
+            val_acc.append(acc.item())
         avg_loss = np.mean(val_loss[-opt.iterations:])
         avg_acc = np.mean(val_acc[-opt.iterations:])
         postfix = ' (Best)' if avg_acc >= best_acc else ' (Best: {})'.format(
@@ -174,17 +172,16 @@ def test(opt, test_dataloader, model):
     '''
     Test the model trained with the prototypical learning algorithm
     '''
+    device = 'cuda:0' if torch.cuda.is_available() and opt.cuda else 'cpu'
     avg_acc = list()
     for epoch in range(10):
         test_iter = iter(test_dataloader)
         for batch in test_iter:
             x, y = batch
-            x, y = Variable(x), Variable(y)
-            if opt.cuda:
-                x, y = x.cuda(), y.cuda()
+            x, y = x.to(device), y.to(device)
             model_output = model(x)
             _, acc = loss(model_output, target=y, n_support=opt.num_support_tr)
-            avg_acc.append(acc.data[0])
+            avg_acc.append(acc.item())
     avg_acc = np.mean(avg_acc)
     print('Test Acc: {}'.format(avg_acc))
 
