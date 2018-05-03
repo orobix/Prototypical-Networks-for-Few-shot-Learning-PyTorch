@@ -53,8 +53,6 @@ def prototypical_loss(input, target, n_support):
     - n_support: number of samples to keep in account when computing
       barycentres, for each one of the current classes
     '''
-    cputargs = target.cpu() if target.is_cuda else target
-
     def supp_idxs(c):
         # FIXME when torch will support where as np
         return (target == c).nonzero()[:n_support].squeeze()
@@ -69,7 +67,7 @@ def prototypical_loss(input, target, n_support):
 
     prototypes = torch.stack([input[i].mean(0) for i in support_idxs]).to(target.device)
     # FIXME when torch will support where as np
-    query_idxs = torch.stack(list(map(lambda c: (cputargs == c).nonzero()[n_support:], classes))).view(-1).to(target.device)
+    query_idxs = torch.stack(list(map(lambda c: (target == c).nonzero()[n_support:], classes))).view(-1).to(target.device)
 
     query_samples = input[query_idxs]
     dists = euclidean_dist(query_samples, prototypes)
