@@ -3,7 +3,7 @@ from prototypical_batch_sampler import PrototypicalBatchSampler
 from omniglot_dataset import OmniglotDataset
 from protonet import ProtoNet
 import torch
-from prototypical_loss import prototypical_loss as loss
+from prototypical_loss import prototypical_loss as loss_fn
 import numpy as np
 from parser import get_parser
 from tqdm import tqdm
@@ -129,10 +129,10 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             x, y = batch
             x, y = x.to(device), y.to(device)
             model_output = model(x)
-            l, acc = loss(model_output, target=y, n_support=opt.num_support_tr)
-            l.backward()
+            loss, acc = loss_fn(model_output, target=y, n_support=opt.num_support_tr)
+            loss.backward()
             optim.step()
-            train_loss.append(l.item())
+            train_loss.append(loss.item())
             train_acc.append(acc.item())
         avg_loss = np.mean(train_loss[-opt.iterations:])
         avg_acc = np.mean(train_acc[-opt.iterations:])
@@ -146,8 +146,8 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             x, y = batch
             x, y = x.to(device), y.to(device)
             model_output = model(x)
-            l, acc = loss(model_output, target=y, n_support=opt.num_support_val)
-            val_loss.append(l.item())
+            loss, acc = loss_fn(model_output, target=y, n_support=opt.num_support_val)
+            val_loss.append(loss.item())
             val_acc.append(acc.item())
         avg_loss = np.mean(val_loss[-opt.iterations:])
         avg_acc = np.mean(val_acc[-opt.iterations:])
@@ -180,7 +180,7 @@ def test(opt, test_dataloader, model):
             x, y = batch
             x, y = x.to(device), y.to(device)
             model_output = model(x)
-            _, acc = loss(model_output, target=y, n_support=opt.num_support_tr)
+            _, acc = loss_fn(model_output, target=y, n_support=opt.num_support_tr)
             avg_acc.append(acc.item())
     avg_acc = np.mean(avg_acc)
     print('Test Acc: {}'.format(avg_acc))
