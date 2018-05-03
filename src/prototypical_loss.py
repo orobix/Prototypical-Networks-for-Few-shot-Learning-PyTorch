@@ -1,7 +1,5 @@
 # coding=utf-8
 import torch
-import numpy as np
-from torch.autograd import Variable
 from torch.nn import functional as F
 from torch.nn.modules import Module
 from torch.nn.modules.loss import _assert_no_grad
@@ -62,19 +60,20 @@ def prototypical_loss(input, target, n_support):
     def supp_idxs(c):
         return torch.nonzero(cputargs.eq(int(c)))[:n_support].squeeze()
 
-    classes = np.unique(cputargs)
+    classes = torch.unique(cputargs)
     n_classes = len(classes)
     n_query = len(torch.nonzero(cputargs.eq(int(classes[0])))) - n_support
 
-    os_idxs = list(map(supp_idxs, classes))
+    support_idxs = list(map(supp_idxs, classes))
 
-    prototypes = torch.stack([cpuinput[i].mean(0) for i in os_idxs])
+    prototypes = torch.stack([cpuinput[i].mean(0) for i in support_idxs])
 
     prototypes = prototypes.cuda() if target.is_cuda else prototypes
-    oq_idxs_0 = torch.stack(list(map(lambda c: torch.nonzero(cputargs.eq(int(c)))[n_support:], classes))).view(-1)
-    oq_idxs_0 = oq_idxs_0.cuda() if target.is_cuda else oq_idxs_0
-    oq = input[oq_idxs_0]
-    dists = euclidean_dist(oq, prototypes)
+
+    query_idxs = torch.stack(list(map(lambda c: torch.nonzero(cputargs.eq(int(c)))[n_support:], classes))).view(-1)
+    query_idxs = query_idxs.cuda() if target.is_cuda else query_idxs
+    query_samples = input[query_idxs]
+    dists = euclidean_dist(query_samples, prototypes)
 
     log_p_y = F.log_softmax(-dists, dim=1).view(n_classes, n_query, -1)
 
@@ -82,7 +81,6 @@ def prototypical_loss(input, target, n_support):
     target_inds = target_inds.view(n_classes, 1, 1)
     target_inds = target_inds.expand(n_classes, n_query, 1).long()
     target_inds = target_inds.long()
-    target_inds = Variable(target_inds, requires_grad=False)
     target_inds = target_inds.cuda() if target.is_cuda else target_inds
 
     loss_val = -log_p_y.gather(2, target_inds).squeeze().view(-1).mean()
