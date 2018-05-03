@@ -7,7 +7,7 @@ from torch.nn.modules.loss import _assert_no_grad
 
 class PrototypicalLoss(Module):
     '''
-    Class à la PyTorch for the prototypical loss function defined below
+    Loss class deriving from Module for the prototypical loss function defined below
     '''
 
     def __init__(self, n_support):
@@ -54,38 +54,34 @@ def prototypical_loss(input, target, n_support):
       barycentres, for each one of the current classes
     '''
     cputargs = target.cpu() if target.is_cuda else target
-    cputargs = cputargs.data
-    cpuinput = input.cpu() if target.is_cuda else input
 
     def supp_idxs(c):
-        return torch.nonzero(cputargs.eq(int(c)))[:n_support].squeeze()
+        # FIXME when torch will support where as np
+        return (target == c).nonzero()[:n_support].squeeze()
 
-    classes = torch.unique(cputargs)
+    # FIXME when torch.unique will be available on cuda too
+    classes = torch.unique(target.to('cpu')).to(target.device)
     n_classes = len(classes)
-    n_query = len(torch.nonzero(cputargs.eq(int(classes[0])))) - n_support
+    # FIXME when torch will support where as np
+    n_query = len((target == int(classes[0])).nonzero()) - n_support
 
     support_idxs = list(map(supp_idxs, classes))
 
-    prototypes = torch.stack([cpuinput[i].mean(0) for i in support_idxs])
+    prototypes = torch.stack([input[i].mean(0) for i in support_idxs]).to(target.device)
+    # FIXME when torch will support where as np
+    query_idxs = torch.stack(list(map(lambda c: (cputargs == c).nonzero()[n_support:], classes))).view(-1).to(target.device)
 
-    prototypes = prototypes.cuda() if target.is_cuda else prototypes
-
-    query_idxs = torch.stack(list(map(lambda c: torch.nonzero(cputargs.eq(int(c)))[n_support:], classes))).view(-1)
-    query_idxs = query_idxs.cuda() if target.is_cuda else query_idxs
     query_samples = input[query_idxs]
     dists = euclidean_dist(query_samples, prototypes)
 
     log_p_y = F.log_softmax(-dists, dim=1).view(n_classes, n_query, -1)
 
-    target_inds = torch.arange(0, n_classes)
+    target_inds = torch.arange(0, n_classes).to(target.device)
     target_inds = target_inds.view(n_classes, 1, 1)
     target_inds = target_inds.expand(n_classes, n_query, 1).long()
-    target_inds = target_inds.long()
-    target_inds = target_inds.cuda() if target.is_cuda else target_inds
 
     loss_val = -log_p_y.gather(2, target_inds).squeeze().view(-1).mean()
     _, y_hat = log_p_y.max(2)
-
     acc_val = torch.eq(y_hat, target_inds.squeeze()).float().mean()
 
     return loss_val,  acc_val
