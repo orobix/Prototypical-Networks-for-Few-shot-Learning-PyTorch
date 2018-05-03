@@ -37,7 +37,7 @@ class PrototypicalBatchSampler(object):
         self.label_tens = torch.Tensor(self.label_tens)
         self.label_lens = torch.zeros_like(self.classes)
         for idx, label in enumerate(self.labels):
-            label_idx = np.argwhere(self.classes == label)[0, 0]
+            label_idx = np.argwhere(self.classes == label).item()
             self.label_tens[label_idx, np.where(np.isnan(self.label_tens[label_idx]))[0][0]] = idx
             self.label_lens[label_idx] += 1
 
@@ -54,7 +54,8 @@ class PrototypicalBatchSampler(object):
             c_idxs = torch.randperm(len(self.classes))[:cpi]
             for i, c in enumerate(self.classes[c_idxs]):
                 s = slice(i * spc, (i + 1) * spc)
-                label_idx = np.argwhere(self.classes == c)[0, 0]
+                # FIXME when torch.argwhere will exists
+                label_idx = torch.arange(len(self.classes)).long()[self.classes == c].item()
                 sample_idxs = torch.randperm(self.label_lens[label_idx])[:spc]
                 batch[s] = self.label_tens[label_idx][sample_idxs]
             batch = batch[torch.randperm(len(batch))]
