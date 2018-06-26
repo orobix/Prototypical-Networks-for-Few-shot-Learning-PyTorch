@@ -32,6 +32,10 @@ class PrototypicalBatchSampler(object):
         self.classes, self.counts = np.unique(self.labels, return_counts=True)
         self.classes = torch.LongTensor(self.classes)
 
+        # create a matrix of dim: classes X max(elements per class)
+        # fill it with nans
+        # for every class c, fill the relative row with the indices samples belonging to c
+        # in label_lens we store the number of samples for each class/row
         self.idxs = range(len(self.labels))
         self.label_tens = np.empty((len(self.classes), max(self.counts)), dtype=int) * np.nan
         self.label_tens = torch.Tensor(self.label_tens)
