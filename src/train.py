@@ -1,12 +1,13 @@
 # coding=utf-8
 from prototypical_batch_sampler import PrototypicalBatchSampler
+from prototypical_loss import prototypical_loss as loss_fn
 from omniglot_dataset import OmniglotDataset
 from protonet import ProtoNet
-import torch
-from prototypical_loss import prototypical_loss as loss_fn
-import numpy as np
 from parser import get_parser
+
 from tqdm import tqdm
+import numpy as np
+import torch
 import os
 
 
