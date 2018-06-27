@@ -9,7 +9,6 @@ class PrototypicalLoss(Module):
     '''
     Loss class deriving from Module for the prototypical loss function defined below
     '''
-
     def __init__(self, n_support):
         super(PrototypicalLoss, self).__init__()
         self.n_support = n_support
