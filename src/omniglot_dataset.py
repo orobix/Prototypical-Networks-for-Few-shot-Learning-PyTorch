@@ -1,12 +1,12 @@
 # coding=utf-8
 from __future__ import print_function
 import torch.utils.data as data
-import numpy as np
-import errno
-import os
 from PIL import Image
-import torch
+import numpy as np
 import shutil
+import errno
+import torch
+import os
 
 '''
 Inspired by https://github.com/pytorch/vision/pull/46
