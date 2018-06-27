@@ -22,7 +22,13 @@ def init_seed(opt):
 
 
 def init_dataset(opt, mode):
-    return OmniglotDataset(mode=mode, root=opt.dataset_root)
+    dataset = OmniglotDataset(mode=mode, root=opt.dataset_root)
+    n_classes = len(torch.unique(dataset.y))
+    if n_classes < opt.classes_per_it_tr or n_classes < opt.classes_per_it_val:
+        raise(Exception('There are not enough classes in the dataset in order\
+                         to satisfy the chosen classes_per_it. Decrease the \
+                         classes_per_it_{tr/val} cli option and try again.'))
+    return dataset
 
 
 def init_sampler(opt, labels, mode):
