@@ -2,7 +2,6 @@
 import torch
 from torch.nn import functional as F
 from torch.nn.modules import Module
-from torch.nn.modules.loss import _assert_no_grad
 
 
 class PrototypicalLoss(Module):
@@ -14,7 +13,6 @@ class PrototypicalLoss(Module):
         self.n_support = n_support
 
     def forward(self, input, target):
-        _assert_no_grad(target)
         return prototypical_loss(input, target, self.n_support)
 
 
