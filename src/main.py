@@ -51,7 +51,7 @@ train_loader, valid_loader, test_loader = load_dataloaders(sets, batch_size)
 
 model = ProtoNet()
 
-if torch.cuda.is_available():
+if use_gpu:
     model = model.cuda()
 
 #*################################
@@ -84,9 +84,9 @@ for epoch in range(n_epochs):
         progress_bar.set_description("Epoch {}".format(epoch))
         
         inputs = torch.reshape(inputs, (inputs.shape[0] * inputs.shape[1], inputs.shape[2], inputs.shape[3], inputs.shape[4]))
-        targets = torch.reshape(targets, (1, targets.shape[0] * targets.shape[1]))
+        targets = torch.reshape(targets, (1, targets.shape[0] * targets.shape[1])).squeeze()
 
-        if device == 'cuda':
+        if use_gpu:
             inputs = inputs.cuda()
             targets = targets.cuda()
 
