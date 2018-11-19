@@ -1,15 +1,14 @@
 #%%
 import copy
 import os
-import pdb
-import time
 
 import torch
 from torch import load, nn, optim
+from torch.utils.data.sampler import RandomSampler
 
 from torchvision import datasets, transforms
-from torch.utils.data.sampler import RandomSampler
-from utils.transforms import ToTensor
+
+from src.protonet import ProtoNet
 from utils.miniimagenet_dataset import MiniImageNet
 
 #################################
@@ -34,28 +33,25 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 #     Chargement du dataset     #
 #################################
 
-transforms = transforms.Compose([
-                      # transforms.Resize((84,84), interpolation=2),
-                      transforms.ToTensor()
-             ])
+trans = transforms.Compose([transforms.ToTensor()])
 
 train_set = MiniImageNet(csv_file=train_path,
                         separator=separator,
                         root_dir=dataset_path,
                         n_shots=n_shots,
-                        transforms=transforms)
+                        transforms=trans)
 
 valid_set = MiniImageNet(csv_file=valid_path,
                         separator=separator,
                         root_dir=dataset_path,
                         n_shots=n_shots,
-                        transforms=transforms)
+                        transforms=trans)
 
 test_set = MiniImageNet(csv_file=test_path,
                         separator=separator,
                         root_dir=dataset_path,
                         n_shots=n_shots,
-                        transforms=transforms)
+                        transforms=trans)
 
 train_loader = torch.utils.data.DataLoader(train_set,
                                            batch_size=n_ways,
@@ -63,16 +59,12 @@ train_loader = torch.utils.data.DataLoader(train_set,
                                            num_workers=1,
                                            pin_memory=False)
 
-for idx, (query, support) in enumerate(train_loader):
-  print('Idx: ' + idx)
-  print('Query: ' + query)
-  print('Support :' + support)
-  print('stop')
+model = ProtoNet()
 
-# if torch.cuda.is_available():
-    # net = net.cuda()
+if torch.cuda.is_available():
+    net = net.cuda()
 
-# print("\n\n Quantity of parameters: ", sum([param.nelement() for param in net.parameters()]))
+print("\n\n Quantity of parameters: ", sum([param.element() for param in net.parameters()]))
 
 
 #################################
