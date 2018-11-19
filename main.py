@@ -43,7 +43,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 #*################################
 paths = {'root_dir':dataset_path, 'train_dir':train_path, 'valid_dir':valid_path, 'test_dir':test_path}
 transform = transforms.Compose([
-                                transforms.Resize(84),
+                                transforms.Resize((84,84)),
                                 transforms.ToTensor()
                                ])
 train_set, valid_set, test_set = load_split_datasets(paths, n_supports, n_queries, transforms=transform)
@@ -56,9 +56,9 @@ model = ProtoNet()
 if torch.cuda.is_available():
     model = model.cuda()
 
-#################################
-#   Parametres d'entrainement   #
-#################################
+#*################################
+#*   Parametres d'entrainement   #
+#*################################
 optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()),
                              lr=learning_rate,
                              momentum=momentum,
@@ -73,9 +73,9 @@ criterion = PrototypicalLoss(n_supports)
 #                                                  verbose=True,
 #                                                  threshold=accuracy_threshold)
 
-# #################################
-# #          Entrainement         #
-# #################################
+#*#################################
+#*           Entrainement         #
+#*#################################
 history = History()
 # best_loss = 1
 for epoch in range(n_epochs):
@@ -113,9 +113,9 @@ for epoch in range(n_epochs):
     # history.save(train_acc, val_acc, train_loss, val_loss, optimizer.param_groups[0]['lr'])
 
 
-# #################################
-# #             Tests             #
-# #################################
+#*#################################
+#*             Tests              #
+#*#################################
 # # Charger le meilleur modele enregistre
 # state_dict = load(save_path)
 # net.load_state_dict(state_dict)

@@ -52,7 +52,10 @@ class MiniImageNet(Dataset):
 
         for idx in indices:
             img = pil_loader(os.path.join(class_path, images[idx]))
-            supports.append(self.transforms(img))
+            if self.transforms != None:
+                supports.append(self.transforms(img))
+            else:
+                supports.append(img)
 
         support_vector = supports[:self.n_supports]
         query_vector = supports[self.n_supports:]
