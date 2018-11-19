@@ -4,13 +4,15 @@ import os
 
 import torch
 from torch import load, nn, optim
+from torch.autograd import Variable
 from torch.utils.data.sampler import RandomSampler
-
-from torchvision import datasets, transforms
+from tqdm import tqdm
 
 from protonet import ProtoNet
-
-from utils.dataloading import load_split_datasets, load_dataloaders
+from prototypical_loss import PrototypicalLoss
+from torchvision import datasets, transforms
+from utils.dataloading import load_dataloaders, load_split_datasets
+from utils.graphs import History
 
 #################################
 #           Variables           #
@@ -28,6 +30,10 @@ separator = ';'
 #############################
 n_ways = 5
 n_shots = 5
+learning_rate = 0.01
+momentum = 0.9
+n_epochs = 10
+batch_size = 64
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 #################################
@@ -48,13 +54,14 @@ if torch.cuda.is_available():
 #################################
 #   Parametres d'entrainement   #
 #################################
-# optimizer = optim.SGD(filter(lambda p: p.requires_grad, net.parameters()),
-#                           lr=learning_rate,
-#                           momentum=momentum,
-#                           nesterov=True,
-#                           weight_decay=0.01)
+optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()),
+                             lr=learning_rate,
+                             momentum=momentum,
+                             nesterov=True,
+                             weight_decay=0.01)
 
-# criterion = nn.CrossEntropyLoss()
+criterion = PrototypicalLoss(n_shots)
+
 # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer,
 #                                                  mode='min',
 #                                                  patience=patience,
@@ -64,7 +71,41 @@ if torch.cuda.is_available():
 # #################################
 # #          Entrainement         #
 # #################################
-# history = train(net, device, optimizer, train_set, valid_set, n_epoch, batch_size, save_path, use_gpu=use_gpu, criterion=criterion, scheduler=scheduler)
+history = History()
+best_loss = 1
+for epoch in range(n_epochs):
+    progress_bar = tqdm(train_loader, desc="Epoch {}".format(epoch))
+    model.train()
+
+    for idx, (inputs, targets) in enumerate(progress_bar):
+        progress_bar.set_description("Epoch {}".format(epoch))
+
+        if device == 'cuda':
+            inputs = inputs.cuda()
+            targets = targets.cuda()
+
+        optimizer.zero_grad()
+
+        inputs, targets = Variable(inputs), Variable(targets)
+        predictions = model(inputs)
+
+        loss = criterion(predictions, targets)
+        loss.backward()
+        optimizer.step()
+
+        progress_bar.set_postfix({'loss': loss.cpu().data.numpy()})
+
+    # if scheduler:
+    #       scheduler.step(val_loss)
+    # print('Accuracy: %2f' % val_loss)
+
+    # Deep copy the best model
+    # if val_loss < best_loss:
+    #     best_loss = val_loss
+    #     best_model_weights = copy.deepcopy(model.state_dict())
+    #     torch.save(best_model_weights, filename)
+
+    # history.save(train_acc, val_acc, train_loss, val_loss, optimizer.param_groups[0]['lr'])
 
 
 # #################################
