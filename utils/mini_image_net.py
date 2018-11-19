@@ -3,9 +3,9 @@ import os
 import warnings
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import scipy.io as sio
-import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
@@ -35,7 +35,7 @@ class MiniImageNet(Dataset):
         return len(self.csv_mappings)
 
     def __getitem__(self, idx):
-        supports = []
+        drafted_images = []
 
         #* Randomly pick a class for the support set
         class_name = self.csv_mappings.ix[idx]
@@ -53,19 +53,19 @@ class MiniImageNet(Dataset):
         for idx in indices:
             img = pil_loader(os.path.join(class_path, images[idx]))
             if self.transforms != None:
-                supports.append(self.transforms(img))
+                drafted_images.append(self.transforms(img))
             else:
-                supports.append(img)
+                drafted_images.append(img)
 
-        support_vector = supports[:self.n_supports]
-        query_vector = supports[self.n_supports:]
-        sample = [support_vector, query_vector]
-
-        return sample
+        sample = []
+        support_vector = drafted_images[:self.n_supports]
+        query_vector = drafted_images[self.n_supports:]
+        sample.extend(support_vector)
+        sample.extend(query_vector)
+        
+        return sample, torch.from_numpy(indices)
     
 def pil_loader(path):
     with open(path, 'rb') as f:
         img = Image.open(f)
         return img.convert('RGB')
-
-    

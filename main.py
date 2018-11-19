@@ -30,12 +30,11 @@ separator = ';'
 #*############################
 n_supports = 5
 n_queries = 5
-n_ways = 5
+n_ways = 60
 n_shots = 5
 learning_rate = 0.01
 momentum = 0.9
 n_epochs = 10
-batch_size = 64
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 #*################################
@@ -84,19 +83,23 @@ for epoch in range(n_epochs):
 
     for idx, (inputs, targets) in enumerate(progress_bar):
         progress_bar.set_description("Epoch {}".format(epoch))
+        
+        for episode in range(len(targets)):
+            inputs = inputs[episode]
+            targets = targets[episode]
 
-        if device == 'cuda':
-            inputs = inputs.cuda()
-            targets = targets.cuda()
+            if device == 'cuda':
+                inputs = inputs.cuda()
+                targets = targets.cuda()
 
-        optimizer.zero_grad()
+            optimizer.zero_grad()
 
-        inputs, targets = Variable(inputs), Variable(targets)
-        predictions = model(inputs)
+            inputs, targets = Variable(inputs), Variable(targets)
+            predictions = model(inputs)
 
-        loss = criterion(predictions, targets)
-        loss.backward()
-        optimizer.step()
+            loss = criterion(predictions, targets)
+            loss.backward()
+            optimizer.step()
 
         progress_bar.set_postfix({'loss': loss.cpu().data.numpy()})
 
