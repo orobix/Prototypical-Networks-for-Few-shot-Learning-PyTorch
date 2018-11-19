@@ -34,7 +34,7 @@ def euclidean_dist(x, y):
     return torch.pow(x - y, 2).sum(2)
 
 
-def prototypical_loss(input, target, n_support):
+def prototypical_loss(model_output, target, n_support):
     '''
     Inspired by https://github.com/jakesnell/prototypical-networks/blob/master/protonets/models/few_shot.py
 
@@ -50,37 +50,38 @@ def prototypical_loss(input, target, n_support):
     - n_support: number of samples to keep in account when computing
       barycentres, for each one of the current classes
     '''
-    target_cpu = target.to('cpu')
-    input_cpu = input.to('cpu')
 
-    def supp_idxs(c):
-        # FIXME when torch will support where as np
+    target_cpu = target.to('cpu')
+    model_output_cpu = model_output.to('cpu')
+
+    def get_supports_indexes(c):
+        # takes first 5 indexes of class c to make theme supports
         return target_cpu.eq(c).nonzero()[:n_support].squeeze(1)
 
-    # FIXME when torch.unique will be available on cuda too
+    def get_queries_indexes(c):
+        return target_cpu.eq(c).nonzero()[n_support:]
+
     classes = torch.unique(target_cpu)
     n_classes = len(classes)
-    # FIXME when torch will support where as np
-    # assuming n_query, n_target constants
-    n_query = target_cpu.eq(classes[0].item()).sum().item() - n_support
 
-    support_idxs = list(map(supp_idxs, classes))
+    support_indexes = list(map(get_supports_indexes, classes))
+    supports = [model_output_cpu[idx_list] for idx_list in support_indexes]
+    prototypes = torch.stack([support.mean(0) for support in supports]) # mean of supports for each class
 
-    prototypes = torch.stack([input_cpu[idx_list].mean(0) for idx_list in support_idxs])
-    # FIXME when torch will support where as np
-    query_idxs = torch.stack(list(map(lambda c: target_cpu.eq(c).nonzero()[n_support:], classes))).view(-1)
+    queries_indexes = list(map(get_queries_indexes, classes))
+    n_query_per_class = len(queries_indexes[0])
 
-    query_samples = input.to('cpu')[query_idxs]
-    dists = euclidean_dist(query_samples, prototypes)
+    queries_indexes = torch.stack(queries_indexes).view(-1)
+    queries = model_output_cpu[queries_indexes] # here, queries are in groups of 5 (by class)
 
-    log_p_y = F.log_softmax(-dists, dim=1).view(n_classes, n_query, -1)
+    dists = euclidean_dist(queries, prototypes)
+    log_softmax_dists = F.log_softmax(-dists, dim=1).view(n_classes, n_query_per_class, -1)
 
-    target_inds = torch.arange(0, n_classes)
-    target_inds = target_inds.view(n_classes, 1, 1)
-    target_inds = target_inds.expand(n_classes, n_query, 1).long()
+    # mask that allows to keep only the log_softmax of distances between query and support of same class
+    dist_mask = torch.arange(0, n_classes).view(n_classes, 1, 1).expand(n_classes, n_query_per_class, 1).long()
 
-    loss_val = -log_p_y.gather(2, target_inds).squeeze().view(-1).mean()
-    _, y_hat = log_p_y.max(2)
-    acc_val = y_hat.eq(target_inds.squeeze()).float().mean()
-
-    return loss_val,  acc_val
+    loss_val = -log_softmax_dists.gather(2, dist_mask).squeeze().view(-1).mean()
+    _, y_hat = log_softmax_dists.max(2)
+    accuracy_value = y_hat.eq(dist_mask.squeeze()).float().mean()
+    
+    return loss_val,  accuracy_value
