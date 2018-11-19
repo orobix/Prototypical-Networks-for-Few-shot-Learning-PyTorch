@@ -1,5 +1,6 @@
 # Custom
 mini_imagenet/
+.vscode
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
