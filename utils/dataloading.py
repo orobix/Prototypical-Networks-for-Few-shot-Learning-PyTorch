@@ -5,27 +5,31 @@ from torchvision import transforms
 from utils.mini_image_net import MiniImageNet
 
 
-def load_split_datasets(paths, n_shots, separator=';'):
+def load_split_datasets(paths, n_supports, n_queries, separator=';'):
 
     trans = transforms.Compose([transforms.ToTensor()])
 
     train_set = MiniImageNet(csv_file=paths[1],
                             separator=separator,
                             root_dir=paths[0],
-                            n_shots=n_shots,
+                            n_supports=n_supports,
+                            n_queries=n_queries,
                             transforms=trans)
 
     valid_set = MiniImageNet(csv_file=paths[2],
                             separator=separator,
                             root_dir=paths[0],
-                            n_shots=n_shots,
+                            n_supports=n_supports,
+                            n_queries=n_queries,
                             transforms=trans)
 
     test_set = MiniImageNet(csv_file=paths[3],
                             separator=separator,
                             root_dir=paths[0],
-                            n_shots=n_shots,
+                            n_supports=n_supports,
+                            n_queries=n_queries,
                             transforms=trans)
+
     return train_set, valid_set, test_set
 
 def load_dataloaders(sets, n_ways):
