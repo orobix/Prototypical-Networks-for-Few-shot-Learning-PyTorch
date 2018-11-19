@@ -28,21 +28,21 @@ def load_split_datasets(paths, n_supports, n_queries, separator=';', transforms=
 
     return train_set, valid_set, test_set
 
-def load_dataloaders(sets, n_ways):
+def load_dataloaders(sets, batch_size):
     train_loader = torch.utils.data.DataLoader(sets['train_set'],
-                                               batch_size=n_ways,
+                                               batch_size=batch_size,
                                                shuffle=True)
                                                #num_workers=1,
                                                #pin_memory=False)
 
     valid_loader = torch.utils.data.DataLoader(sets['valid_set'],
-                                               batch_size=n_ways,
+                                               batch_size=batch_size,
                                                shuffle=True)
                                                #num_workers=1,
                                                #pin_memory=False)
 
     test_loader = torch.utils.data.DataLoader(sets['test_set'],
-                                              batch_size=n_ways,
+                                              batch_size=batch_size,
                                               shuffle=True)
                                               #num_workers=1,
                                               #pin_memory=False)

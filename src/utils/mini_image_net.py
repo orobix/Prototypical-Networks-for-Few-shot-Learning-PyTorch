@@ -58,12 +58,10 @@ class MiniImageNet(Dataset):
                 drafted_images.append(img)
 
         sample = []
-        support_vector = drafted_images[:self.n_supports]
-        query_vector = drafted_images[self.n_supports:]
-        sample.extend(support_vector)
-        sample.extend(query_vector)
+        sample.extend(drafted_images[:self.n_supports])
+        sample.extend(drafted_images[self.n_supports:])
         
-        return sample, torch.from_numpy(indices)
+        return torch.stack(sample), torch.from_numpy(indices)
     
 def pil_loader(path):
     with open(path, 'rb') as f:
