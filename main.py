@@ -14,9 +14,9 @@ from torchvision import datasets, transforms
 from utils.dataloading import load_dataloaders, load_split_datasets
 from utils.graphs import History
 
-#################################
-#           Variables           #
-#################################
+#*################################
+#*           Variables           #
+#*################################
 # Constants
 use_gpu = torch.cuda.is_available()
 dataset_path = './mini_imagenet/images'
@@ -25,9 +25,9 @@ valid_path = './mini_imagenet/csvsplits/valid.csv'
 test_path = './mini_imagenet/csvsplits/test.csv'
 separator = ';'
 
-############################# 
-#       Hyperparameters     #
-#############################
+#*############################ 
+#*       Hyperparameters     #
+#*############################
 n_supports = 5
 n_queries = 5
 n_ways = 5
@@ -38,21 +38,17 @@ n_epochs = 10
 batch_size = 64
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-#################################
-#     Chargement du dataset     #
-#################################
+#*################################
+#*     Chargement du dataset     #
+#*################################
+paths = {'root_dir':dataset_path, 'train_dir':train_path, 'valid_dir':valid_path, 'test_dir':test_path}
+transform = transforms.Compose([
+                                transforms.Resize(84),
+                                transforms.ToTensor()
+                               ])
+train_set, valid_set, test_set = load_split_datasets(paths, n_supports, n_queries, transforms=transform)
 
-paths = {'root_dir':dataset_path,
-         'train_dir':train_path,
-         'valid_dir':valid_path,
-         'test_dir':test_path
-        }
-train_set, valid_set, test_set = load_split_datasets(paths, n_supports, n_queries)
-
-sets = {'train_set':train_set,
-         'valid_set':valid_set,
-         'test_set':test_set
-       }
+sets = {'train_set':train_set, 'valid_set':valid_set, 'test_set':test_set}
 train_loader, valid_loader, test_loader = load_dataloaders(sets, n_ways)
 
 model = ProtoNet()

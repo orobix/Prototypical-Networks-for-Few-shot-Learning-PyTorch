@@ -1,33 +1,30 @@
 
 import torch
 
-from torchvision import transforms
 from utils.mini_image_net import MiniImageNet
 
 
-def load_split_datasets(paths, n_supports, n_queries, separator=';'):
-    trans = transforms.Compose([transforms.ToTensor()])
-
+def load_split_datasets(paths, n_supports, n_queries, separator=';', transforms=None):
     train_set = MiniImageNet(csv_file=paths['train_dir'],
                             separator=separator,
                             root_dir=paths['root_dir'],
                             n_supports=n_supports,
                             n_queries=n_queries,
-                            transforms=trans)
+                            transforms=transforms)
 
     valid_set = MiniImageNet(csv_file=paths['valid_dir'],
                             separator=separator,
                             root_dir=paths['root_dir'],
                             n_supports=n_supports,
                             n_queries=n_queries,
-                            transforms=trans)
+                            transforms=transforms)
 
     test_set = MiniImageNet(csv_file=paths['test_dir'],
                             separator=separator,
                             root_dir=paths['root_dir'],
                             n_supports=n_supports,
                             n_queries=n_queries,
-                            transforms=trans)
+                            transforms=transforms)
 
     return train_set, valid_set, test_set
 
