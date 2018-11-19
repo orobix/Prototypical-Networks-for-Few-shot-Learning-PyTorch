@@ -39,14 +39,14 @@ class MiniImageNet(Dataset):
       #* Start by randomly picking a class
       class_name = self.csv_mappings.ix[idx]
         
-      #* Get the folder of this class
+      #* Get the folder of the picked class
       class_path = os.path.join(self.root_dir, class_name)
 
-      #* Get the number of images in this class
+      #* Get the number of images of the picked class
       images = next(os.walk(class_path))[2]
       n_images = len(images)
 
-      #* Shuffle indices and draw the number of shots
+      #* Shuffle indices and draw the wanted number of Shots
       indices = np.arange(0, n_images)
       np.random.shuffle(indices)
       indices = indices[:self.n_shots * 2]
@@ -55,7 +55,7 @@ class MiniImageNet(Dataset):
       for i in indices:
         drafted_images.append(images[i])
 
-      #* Repeat for the number of ways required
+      #* Repeat for the wanted number of Ways
       for drafted_image in drafted_images:
         img = Image.open(os.path.join(class_path, drafted_image))
         shots.append(self.transforms(img))
