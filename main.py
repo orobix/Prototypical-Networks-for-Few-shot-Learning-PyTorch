@@ -8,8 +8,9 @@ from torch.utils.data.sampler import RandomSampler
 
 from torchvision import datasets, transforms
 
-from src.protonet import ProtoNet
-from utils.miniimagenet_dataset import MiniImageNet
+from protonet import ProtoNet
+
+from utils.dataloading import load_split_datasets, load_dataloaders
 
 #################################
 #           Variables           #
@@ -33,39 +34,16 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 #     Chargement du dataset     #
 #################################
 
-trans = transforms.Compose([transforms.ToTensor()])
+paths = [dataset_path, train_path, valid_path, test_path]
+train_set, valid_set, test_set = load_split_datasets(paths, n_shots)
 
-train_set = MiniImageNet(csv_file=train_path,
-                        separator=separator,
-                        root_dir=dataset_path,
-                        n_shots=n_shots,
-                        transforms=trans)
-
-valid_set = MiniImageNet(csv_file=valid_path,
-                        separator=separator,
-                        root_dir=dataset_path,
-                        n_shots=n_shots,
-                        transforms=trans)
-
-test_set = MiniImageNet(csv_file=test_path,
-                        separator=separator,
-                        root_dir=dataset_path,
-                        n_shots=n_shots,
-                        transforms=trans)
-
-train_loader = torch.utils.data.DataLoader(train_set,
-                                           batch_size=n_ways,
-                                           shuffle=True,
-                                           num_workers=1,
-                                           pin_memory=False)
+sets = [train_set, valid_set, test_set]
+train_loader, valid_loader, test_loader = load_dataloaders(sets, n_ways)
 
 model = ProtoNet()
 
 if torch.cuda.is_available():
-    net = net.cuda()
-
-print("\n\n Quantity of parameters: ", sum([param.element() for param in net.parameters()]))
-
+    model = model.cuda()
 
 #################################
 #   Parametres d'entrainement   #
