@@ -31,6 +31,7 @@ separator = ';'
 n_supports = 5
 n_queries = 5
 n_ways = 5
+n_shots = 5
 learning_rate = 0.01
 momentum = 0.9
 n_epochs = 10
@@ -41,10 +42,17 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 #     Chargement du dataset     #
 #################################
 
-paths = [dataset_path, train_path, valid_path, test_path]
+paths = {'root_dir':dataset_path,
+         'train_dir':train_path,
+         'valid_dir':valid_path,
+         'test_dir':test_path
+        }
 train_set, valid_set, test_set = load_split_datasets(paths, n_supports, n_queries)
 
-sets = [train_set, valid_set, test_set]
+sets = {'train_set':train_set,
+         'valid_set':valid_set,
+         'test_set':test_set
+       }
 train_loader, valid_loader, test_loader = load_dataloaders(sets, n_ways)
 
 model = ProtoNet()
@@ -72,13 +80,8 @@ criterion = PrototypicalLoss(n_supports)
 # #################################
 # #          Entrainement         #
 # #################################
-
-for a,b in train_set:
-    print(a)
-    print(b)
-
 history = History()
-best_loss = 1
+# best_loss = 1
 for epoch in range(n_epochs):
     progress_bar = tqdm(train_loader, desc="Epoch {}".format(epoch))
     model.train()
