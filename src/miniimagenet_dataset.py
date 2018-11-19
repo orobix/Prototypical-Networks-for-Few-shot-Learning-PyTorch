@@ -8,53 +8,39 @@ import errno
 import torch
 import os
 
-'''
-Inspired by https://github.com/pytorch/vision/pull/46
-'''
-
 IMG_CACHE = {}
 
-
-class OmniglotDataset(data.Dataset):
-    vinalys_baseurl = 'https://raw.githubusercontent.com/jakesnell/prototypical-networks/master/data/omniglot/splits/vinyals/'
-    vinyals_split_sizes = {
-        'test': vinalys_baseurl + 'test.txt',
-        'train': vinalys_baseurl + 'train.txt',
-        'trainval': vinalys_baseurl + 'trainval.txt',
-        'val': vinalys_baseurl + 'val.txt',
+class MiniImageNetDataset(data.Dataset):
+    ravi_baseurl = 'https://raw.githubusercontent.com/jakesnell/prototypical-networks/master/data/omniglot/splits/ravi/'
+    ravi_split_sizes = {
+        'test': ravi_baseurl + 'test.csv',
+        'train': ravi_baseurl + 'train.csv',
+        'val': ravi_baseurl + 'val.csv',
     }
 
-    urls = [
-        'https://github.com/brendenlake/omniglot/raw/master/python/images_background.zip',
-        'https://github.com/brendenlake/omniglot/raw/master/python/images_evaluation.zip'
-    ]
-    splits_folder = os.path.join('splits', 'vinyals')
+    splits_folder = os.path.join('splits', 'ravi')
     raw_folder = 'raw'
-    processed_folder = 'data'
+    processed_folder = 'mini-imagenet'
 
-    def __init__(self, mode='train', root='../dataset', transform=None, target_transform=None, download=True):
+    def __init__(self, mode='train', root='../dataset', transform=None, target_transform=None):
         '''
         The items are (filename,category). The index of all the categories can be found in self.idx_classes
         Args:
         - root: the directory where the dataset will be stored
         - transform: how to transform the input
         - target_transform: how to transform the target
-        - download: need to download the dataset
         '''
-        super(OmniglotDataset, self).__init__()
+        super(MiniImageNetDataset, self).__init__()
         self.root = root
         self.transform = transform
         self.target_transform = target_transform
 
-        if download:
-            self.download()
-
         if not self._check_exists():
             raise RuntimeError(
-                'Dataset not found. You can use download=True to download it')
+                'Dataset not found.')
 
         self.classes = get_current_classes(os.path.join(
-            self.root, self.splits_folder, mode + '.txt'))
+            self.root, self.splits_folder, mode + '.csv'))
         self.all_items = find_items(os.path.join(
             self.root, self.processed_folder), self.classes)
 
@@ -88,51 +74,6 @@ class OmniglotDataset(data.Dataset):
 
     def _check_exists(self):
         return os.path.exists(os.path.join(self.root, self.processed_folder))
-
-    def download(self):
-        from six.moves import urllib
-        import zipfile
-
-        if self._check_exists():
-            return
-
-        try:
-            os.makedirs(os.path.join(self.root, self.splits_folder))
-            os.makedirs(os.path.join(self.root, self.raw_folder))
-            os.makedirs(os.path.join(self.root, self.processed_folder))
-        except OSError as e:
-            if e.errno == errno.EEXIST:
-                pass
-            else:
-                raise
-
-        for k, url in self.vinyals_split_sizes.items():
-            print('== Downloading ' + url)
-            data = urllib.request.urlopen(url)
-            filename = url.rpartition('/')[-1]
-            file_path = os.path.join(self.root, self.splits_folder, filename)
-            with open(file_path, 'wb') as f:
-                f.write(data.read())
-
-        for url in self.urls:
-            print('== Downloading ' + url)
-            data = urllib.request.urlopen(url)
-            filename = url.rpartition('/')[2]
-            file_path = os.path.join(self.root, self.raw_folder, filename)
-            with open(file_path, 'wb') as f:
-                f.write(data.read())
-            orig_root = os.path.join(self.root, self.raw_folder)
-            print("== Unzip from " + file_path + " to " + orig_root)
-            zip_ref = zipfile.ZipFile(file_path, 'r')
-            zip_ref.extractall(orig_root)
-            zip_ref.close()
-        file_processed = os.path.join(self.root, self.processed_folder)
-        for p in ['images_background', 'images_evaluation']:
-            for f in os.listdir(os.path.join(orig_root, p)):
-                shutil.move(os.path.join(orig_root, p, f), file_processed)
-            os.rmdir(os.path.join(orig_root, p))
-        print("Download finished.")
-
 
 def find_items(root_dir, classes):
     retour = []
