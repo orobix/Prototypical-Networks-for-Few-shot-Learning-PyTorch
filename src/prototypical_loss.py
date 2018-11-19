@@ -82,6 +82,6 @@ def prototypical_loss(model_output, target, n_support):
 
     loss_val = -log_softmax_dists.gather(2, dist_mask).squeeze().view(-1).mean()
     _, y_hat = log_softmax_dists.max(2)
-    acc_val = y_hat.eq(dist_mask.squeeze()).float().mean()
+    accuracy_value = y_hat.eq(dist_mask.squeeze()).float().mean()
 
-    return loss_val,  acc_val
+    return loss_val,  accuracy_value
