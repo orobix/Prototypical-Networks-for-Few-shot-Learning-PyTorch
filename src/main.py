@@ -47,7 +47,7 @@ transform = transforms.Compose([
 train_set, valid_set, test_set = load_split_datasets(paths, n_supports, n_queries, transforms=transform)
 
 sets = {'train_set':train_set, 'valid_set':valid_set, 'test_set':test_set}
-train_loader, valid_loader, test_loader = load_dataloaders(sets, batch_size)
+train_loader, valid_loader, test_loader = load_dataloaders(sets, 10, 100) # on hardcode les valeurs pour l<instant
 
 model = ProtoNet()
 
@@ -83,8 +83,8 @@ for epoch in range(n_epochs):
     for idx, (inputs, targets) in enumerate(progress_bar):
         progress_bar.set_description("Epoch {}".format(epoch))
         
-        inputs = torch.reshape(inputs, (inputs.shape[0] * inputs.shape[1], inputs.shape[2], inputs.shape[3], inputs.shape[4]))
-        targets = torch.reshape(targets, (1, targets.shape[0] * targets.shape[1])).squeeze()
+        # inputs = torch.reshape(inputs, (inputs.shape[0] * inputs.shape[1], inputs.shape[2], inputs.shape[3], inputs.shape[4]))
+        # targets = torch.reshape(targets, (1, targets.shape[0] * targets.shape[1])).squeeze()
 
         if use_gpu:
             inputs = inputs.cuda()
@@ -95,11 +95,12 @@ for epoch in range(n_epochs):
         inputs, targets = Variable(inputs), Variable(targets)
         predictions = model(inputs)
 
-        loss = criterion(predictions, targets)
+        loss, accuracy_value = criterion(predictions, targets)
         loss.backward()
         optimizer.step()
 
         progress_bar.set_postfix({'loss': loss.cpu().data.numpy()})
+        print("accuracy = {}".format(accuracy_value))
 
     # if scheduler:
     #       scheduler.step(val_loss)

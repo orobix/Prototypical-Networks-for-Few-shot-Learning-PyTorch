@@ -106,3 +106,6 @@ ENV/
 
 # PyCharm, JetBrains
 .idea/
+
+# Debz stuff
+mini_imagenet/.DS_Store

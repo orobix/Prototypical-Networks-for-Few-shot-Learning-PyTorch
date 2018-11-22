@@ -31,39 +31,38 @@ class MiniImageNet(Dataset):
         self.n_queries = n_queries
         self.transforms = transforms
 
+        all_class_paths = [os.path.join(self.root_dir, class_name) for class_name in self.csv_mappings]
+        self.all_image_names = []
+        self.all_targets = []
+        self.all_images_tensors = []
+
+        n_class = len(all_class_paths)
+
+        for i, path in enumerate(all_class_paths):
+            print("debut du load des images de la classe {} sur {} en RAM".format(i, n_class))
+            images_from_path = next(os.walk(path))[2]
+            images_from_path = [os.path.join(path, image_name) for image_name in images_from_path]
+            target_of_path = [i] * len(images_from_path)
+            self.all_image_names.extend(images_from_path)
+            self.all_targets.extend(target_of_path)
+
+            image_tensors_from_path = [pil_loader(full_name) for full_name in images_from_path]
+            image_tensors_from_path = [self.transforms(image_obj) for image_obj in image_tensors_from_path]
+            self.all_images_tensors.extend(image_tensors_from_path)
+
+        self.all_targets = torch.LongTensor(self.all_targets)
+        self.all_images_tensors = torch.stack(self.all_images_tensors)
+        
+
     def __len__(self):
         return len(self.csv_mappings)
 
     def __getitem__(self, idx):
-        drafted_images = []
 
-        #* Randomly pick a class for the support set
-        class_name = self.csv_mappings.ix[idx]
-        class_path = os.path.join(self.root_dir, class_name)
-
-        #* Get the number of images in the picked class
-        images = next(os.walk(class_path))[2]
-        n_images = len(images)
-
-        #* Shuffle indices and draw the wanted number of supports
-        indices = np.arange(0, n_images)
-        np.random.shuffle(indices)
-        indices = indices[:(self.n_supports + self.n_queries)]
-
-        for idx in indices:
-            img = pil_loader(os.path.join(class_path, images[idx]))
-            if self.transforms != None:
-                drafted_images.append(self.transforms(img))
-            else:
-                drafted_images.append(img)
-
-        target = (self.n_supports + self.n_queries) * [idx]
-
-        sample = []
-        sample.extend(drafted_images[:self.n_supports])
-        sample.extend(drafted_images[self.n_supports:])
+        x = self.all_images_tensors[idx]
+        y = self.all_targets[idx]
         
-        return torch.stack(sample), torch.from_numpy(np.asarray(target))
+        return x, y
     
 def pil_loader(path):
     with open(path, 'rb') as f:
