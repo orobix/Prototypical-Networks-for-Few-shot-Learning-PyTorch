@@ -49,7 +49,7 @@ train_set, valid_set, test_set = load_split_datasets(paths, n_supports, n_querie
 sets = {'train_set': train_set, 'valid_set': valid_set, 'test_set': test_set}
 
 train_loader, valid_loader, test_loader = load_dataloaders(sets, samples_per_class=n_supports + n_queries,
-                                                           num_it=n_iterations,
+                                                           n_episodes=n_iterations,
                                                            classes_per_it=(60, 10, 10))  # hardcodé pour l'instant
 
 model = ProtoNet()

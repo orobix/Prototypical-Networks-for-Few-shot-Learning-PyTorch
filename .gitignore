@@ -111,4 +111,4 @@ ENV/
 dataset/
 
 # Debz stuff
-mini_imagenet/.DS_Store
+.DS_Store
