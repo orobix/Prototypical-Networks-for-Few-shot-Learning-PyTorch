@@ -1,16 +1,14 @@
-#%%
-import copy
-import os
+# %%
+import math
 
 import torch
-from torch import load, nn, optim
+from torch import optim
 from torch.autograd import Variable
-from torch.utils.data.sampler import RandomSampler
 from tqdm import tqdm
 
 from protonet import ProtoNet
 from prototypical_loss import PrototypicalLoss
-from torchvision import datasets, transforms
+from torchvision import transforms
 from utils.dataloading import load_dataloaders, load_split_datasets
 from utils.graphs import History
 
@@ -24,6 +22,7 @@ train_path =  '../mini_imagenet/csvsplits/train.csv'
 valid_path = '../mini_imagenet/csvsplits/valid.csv'
 test_path = '../mini_imagenet/csvsplits/test.csv'
 separator = ';'
+model_best_state_filename = 'best_state.pt'
 
 #*############################ 
 #*       Hyperparameters     #
@@ -33,21 +32,25 @@ n_queries = 5
 batch_size = 60
 learning_rate = 0.01
 momentum = 0.9
-n_epochs = 10
+n_epochs = 600
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+n_iterations = 100
 
 #*################################
 #*     Chargement du dataset     #
 #*################################
-paths = {'root_dir':dataset_path, 'train_dir':train_path, 'valid_dir':valid_path, 'test_dir':test_path}
+paths = {'root_dir': dataset_path, 'train_dir': train_path, 'valid_dir': valid_path, 'test_dir': test_path}
 transform = transforms.Compose([
-                                transforms.Resize((84,84)),
+                                transforms.Resize((84, 84)),
                                 transforms.ToTensor()
                                ])
 train_set, valid_set, test_set = load_split_datasets(paths, n_supports, n_queries, transforms=transform)
 
-sets = {'train_set':train_set, 'valid_set':valid_set, 'test_set':test_set}
-train_loader, valid_loader, test_loader = load_dataloaders(sets, batch_size)
+sets = {'train_set': train_set, 'valid_set': valid_set, 'test_set': test_set}
+
+train_loader, valid_loader, test_loader = load_dataloaders(sets, samples_per_class=n_supports + n_queries,
+                                                           n_episodes=n_iterations,
+                                                           classes_per_it=(60, 10, 10))  # hardcodé pour l'instant
 
 model = ProtoNet()
 
@@ -75,16 +78,13 @@ criterion = PrototypicalLoss(n_supports)
 #*           Entrainement         #
 #*#################################
 history = History()
-# best_loss = 1
+best_loss = math.inf
 for epoch in range(n_epochs):
     progress_bar = tqdm(train_loader, desc="Epoch {}".format(epoch))
     model.train()
 
     for idx, (inputs, targets) in enumerate(progress_bar):
         progress_bar.set_description("Epoch {}".format(epoch))
-        
-        inputs = torch.reshape(inputs, (inputs.shape[0] * inputs.shape[1], inputs.shape[2], inputs.shape[3], inputs.shape[4]))
-        targets = torch.reshape(targets, (1, targets.shape[0] * targets.shape[1])).squeeze()
 
         if use_gpu:
             inputs = inputs.cuda()
@@ -95,15 +95,15 @@ for epoch in range(n_epochs):
         inputs, targets = Variable(inputs), Variable(targets)
         predictions = model(inputs)
 
-        loss = criterion(predictions, targets)
+        loss, train_accuracy = criterion(predictions, targets)
         loss.backward()
         optimizer.step()
 
         progress_bar.set_postfix({'loss': loss.cpu().data.numpy()})
+        print("accuracy on training set = {}".format(train_accuracy))
 
     # if scheduler:
     #       scheduler.step(val_loss)
-    # print('Accuracy: %2f' % val_loss)
 
     # Deep copy the best model
     # if val_loss < best_loss:

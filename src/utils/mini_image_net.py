@@ -1,18 +1,13 @@
 import os
-# Ignore warnings
-import warnings
+import warnings # Ignore warnings
 
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-import scipy.io as sio
 import torch
 from PIL import Image
-from torch.utils.data import DataLoader, Dataset
-
-from torchvision import transforms, utils
+from torch.utils.data import Dataset
 
 warnings.filterwarnings("ignore")
+
 
 class MiniImageNet(Dataset):
     """Mini Image Net dataset."""
@@ -31,40 +26,43 @@ class MiniImageNet(Dataset):
         self.n_queries = n_queries
         self.transforms = transforms
 
+        all_class_paths = [os.path.join(self.root_dir, class_name) for class_name in self.csv_mappings]
+        self.all_targets = []
+        self.all_image_tensors = []
+
+        n_class = len(all_class_paths)
+
+        for i, current_class_dir in enumerate(all_class_paths):
+            print("debut du load des images de la classe {} sur {} en RAM".format(i, n_class))
+
+            full_file_paths_of_class = next(os.walk(current_class_dir))[2]
+            full_file_paths_of_class = [os.path.join(current_class_dir, image_filename)
+                                       for image_filename
+                                       in full_file_paths_of_class]
+
+            target_of_class = [i] * len(full_file_paths_of_class)
+
+            self.all_targets.extend(target_of_class)
+
+            image_tensors_from_path = [pil_loader(full_path) for full_path in full_file_paths_of_class]
+            image_tensors_from_path = [self.transforms(image_obj) for image_obj in image_tensors_from_path]
+
+            self.all_image_tensors.extend(image_tensors_from_path)
+
+        self.all_targets = torch.LongTensor(self.all_targets)
+        self.all_image_tensors = torch.stack(self.all_image_tensors)
+
     def __len__(self):
-        return len(self.csv_mappings)
+        return len(self.all_targets)
 
     def __getitem__(self, idx):
-        drafted_images = []
 
-        #* Randomly pick a class for the support set
-        class_name = self.csv_mappings.ix[idx]
-        class_path = os.path.join(self.root_dir, class_name)
-
-        #* Get the number of images in the picked class
-        images = next(os.walk(class_path))[2]
-        n_images = len(images)
-
-        #* Shuffle indices and draw the wanted number of supports
-        indices = np.arange(0, n_images)
-        np.random.shuffle(indices)
-        indices = indices[:(self.n_supports + self.n_queries)]
-
-        for idx in indices:
-            img = pil_loader(os.path.join(class_path, images[idx]))
-            if self.transforms != None:
-                drafted_images.append(self.transforms(img))
-            else:
-                drafted_images.append(img)
-
-        target = (self.n_supports + self.n_queries) * [idx]
-
-        sample = []
-        sample.extend(drafted_images[:self.n_supports])
-        sample.extend(drafted_images[self.n_supports:])
+        x = self.all_image_tensors[idx]
+        y = self.all_targets[idx]
         
-        return torch.stack(sample), torch.from_numpy(np.asarray(target))
-    
+        return x, y
+
+
 def pil_loader(path):
     with open(path, 'rb') as f:
         img = Image.open(f)
