@@ -107,5 +107,8 @@ ENV/
 # PyCharm, JetBrains
 .idea/
 
+# Frank stuff
+dataset/
+
 # Debz stuff
 mini_imagenet/.DS_Store

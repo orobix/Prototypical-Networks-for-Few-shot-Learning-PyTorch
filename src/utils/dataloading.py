@@ -29,40 +29,35 @@ def load_split_datasets(paths, n_supports, n_queries, separator=';', transforms=
 
     return train_set, valid_set, test_set
 
-def load_dataloaders(sets, samples_per_class, num_it):
+
+def load_dataloaders(sets, samples_per_class=10, num_it=100, classes_per_it=(60, 10, 10)):
 
     train_set = sets['train_set']
     valid_set = sets['valid_set']
     test_set = sets['test_set']
 
     train_sampler = PrototypicalBatchSampler(labels=train_set.all_targets,
-                                         classes_per_it=60,
+                                         classes_per_it=classes_per_it[0],
                                          num_samples=samples_per_class,
                                          iterations=num_it)
 
-    valid_sampler = PrototypicalBatchSampler(labels=train_set.all_targets,
-                                         classes_per_it=10,
+    valid_sampler = PrototypicalBatchSampler(labels=valid_set.all_targets,
+                                         classes_per_it=classes_per_it[1],
                                          num_samples=samples_per_class,
                                          iterations=num_it)
 
-    test_sampler = PrototypicalBatchSampler(labels=train_set.all_targets,
-                                         classes_per_it=10,
+    test_sampler = PrototypicalBatchSampler(labels=test_set.all_targets,
+                                         classes_per_it=classes_per_it[1],
                                          num_samples=samples_per_class,
                                          iterations=num_it)
-
 
     train_loader = torch.utils.data.DataLoader(sets['train_set'],
                                                batch_sampler=train_sampler)
-                                               #num_workers=1,
-                                               #pin_memory=False)
 
     valid_loader = torch.utils.data.DataLoader(sets['valid_set'],
                                                batch_sampler=valid_sampler)
-                                               #num_workers=1,
-                                               #pin_memory=False)
 
     test_loader = torch.utils.data.DataLoader(sets['test_set'],
                                               batch_sampler=test_sampler)
-                                              #num_workers=1,
-                                              #pin_memory=False)
+
     return train_loader, valid_loader, test_loader

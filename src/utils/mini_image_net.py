@@ -1,18 +1,13 @@
 import os
-# Ignore warnings
-import warnings
+import warnings # Ignore warnings
 
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-import scipy.io as sio
 import torch
 from PIL import Image
-from torch.utils.data import DataLoader, Dataset
-
-from torchvision import transforms, utils
+from torch.utils.data import Dataset
 
 warnings.filterwarnings("ignore")
+
 
 class MiniImageNet(Dataset):
     """Mini Image Net dataset."""
@@ -32,38 +27,42 @@ class MiniImageNet(Dataset):
         self.transforms = transforms
 
         all_class_paths = [os.path.join(self.root_dir, class_name) for class_name in self.csv_mappings]
-        self.all_image_names = []
         self.all_targets = []
-        self.all_images_tensors = []
+        self.all_image_tensors = []
 
         n_class = len(all_class_paths)
 
-        for i, path in enumerate(all_class_paths):
+        for i, current_class_dir in enumerate(all_class_paths):
             print("debut du load des images de la classe {} sur {} en RAM".format(i, n_class))
-            images_from_path = next(os.walk(path))[2]
-            images_from_path = [os.path.join(path, image_name) for image_name in images_from_path]
-            target_of_path = [i] * len(images_from_path)
-            self.all_image_names.extend(images_from_path)
-            self.all_targets.extend(target_of_path)
 
-            image_tensors_from_path = [pil_loader(full_name) for full_name in images_from_path]
+            full_file_paths_of_class = next(os.walk(current_class_dir))[2]
+            full_file_paths_of_class = [os.path.join(current_class_dir, image_filename)
+                                       for image_filename
+                                       in full_file_paths_of_class]
+
+            target_of_class = [i] * len(full_file_paths_of_class)
+
+            self.all_targets.extend(target_of_class)
+
+            image_tensors_from_path = [pil_loader(full_path) for full_path in full_file_paths_of_class]
             image_tensors_from_path = [self.transforms(image_obj) for image_obj in image_tensors_from_path]
-            self.all_images_tensors.extend(image_tensors_from_path)
+
+            self.all_image_tensors.extend(image_tensors_from_path)
 
         self.all_targets = torch.LongTensor(self.all_targets)
-        self.all_images_tensors = torch.stack(self.all_images_tensors)
-        
+        self.all_image_tensors = torch.stack(self.all_image_tensors)
 
     def __len__(self):
-        return len(self.csv_mappings)
+        return len(self.all_targets)
 
     def __getitem__(self, idx):
 
-        x = self.all_images_tensors[idx]
+        x = self.all_image_tensors[idx]
         y = self.all_targets[idx]
         
         return x, y
-    
+
+
 def pil_loader(path):
     with open(path, 'rb') as f:
         img = Image.open(f)
