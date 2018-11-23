@@ -52,15 +52,12 @@ def load_dataloaders(sets, samples_per_class=10, n_episodes=100, classes_per_it=
                                             iterations=n_episodes)
 
     train_loader = torch.utils.data.DataLoader(sets['train_set'],
-                                               batch_sampler=train_sampler,
-                                               num_workers=4)
+                                               batch_sampler=train_sampler)
 
     valid_loader = torch.utils.data.DataLoader(sets['valid_set'],
-                                               batch_sampler=valid_sampler,
-                                               num_workers=4)
+                                               batch_sampler=valid_sampler)
 
     test_loader = torch.utils.data.DataLoader(sets['test_set'],
-                                              batch_sampler=test_sampler,
-                                              num_workers=4)
+                                              batch_sampler=test_sampler)
 
     return train_loader, valid_loader, test_loader
