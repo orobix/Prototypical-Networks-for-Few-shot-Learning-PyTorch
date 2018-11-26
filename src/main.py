@@ -32,7 +32,7 @@ n_support = 5
 n_query = 5
 n_samples_per_class = n_support + n_query
 learning_rate = 1e-3
-n_epochs = 600
+n_epochs = 10000
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 n_episodes = 100
 classes_per_it = (32, 8, 8)
@@ -74,23 +74,27 @@ optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()),
 
 criterion = PrototypicalLoss(n_support)
 
-# scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer,
-#                                                  mode='min',
-#                                                  patience=patience,
-#                                                  verbose=True,
-#                                                  threshold=accuracy_threshold)
+#* Reduce the learning rate by half every 2000 episodes
+scheduler = optim.lr_scheduler.StepLR(optimizer,
+                                      step_size=20, # 20 epochs of 100 episodes
+                                      gamma=0.5)
 
 #*#################################
 #*           Entrainement         #
 #*#################################
 if EXECUTE_TRAINING:
+    PATIENCE_LIMIT = 10
     best_model_weights = None
     best_avg_acc = 0
+    patience_counter = 0
     for epoch in range(n_epochs):
         progress_bar = tqdm(train_loader, desc="Epoch {}".format(epoch))
         progress_bar.set_description("Epoch {}".format(epoch))
-
         model.train()
+
+        if scheduler:
+            scheduler.step()
+
         avg_train_acc = 0
         avg_val_acc = 0
         for (idx, train_batch), (val_idx, val_batch) in zip(enumerate(progress_bar), enumerate(valid_loader)):
@@ -123,13 +127,19 @@ if EXECUTE_TRAINING:
 
             progress_bar.set_postfix({'loss': loss.cpu().data.numpy(), 't_acc':avg_train_acc, 'v_acc':avg_val_acc})
 
-        # if scheduler:
-        #       scheduler.step(val_loss)
-
         # Deep copy the best model
         if avg_val_acc > best_avg_acc:
+            patience_counter = 0
             best_avg_acc = avg_val_acc
             best_model_weights = copy.deepcopy(model.state_dict())
+        else:
+            patience_counter += 1
+
+        if patience_counter >= PATIENCE_LIMIT:
+            print("Training ended. Saving the best model.")
+            torch.save(best_model_weights, filename)
+            print("Best model saved.")
+            break
 
     print("Training ended. Saving the best model.")
     torch.save(best_model_weights, filename)
@@ -142,6 +152,6 @@ if EXECUTE_TRAINING:
 state_dict = torch.load(filename)
 model.load_state_dict(state_dict)
 
-avg_acc = test(model, test_loader, criterion, n_episodes, use_gpu)
+avg_acc = test(model, test_loader, criterion, 600, n_episodes, use_gpu)
 
 print('Précision en test: {:.2f}'.format(avg_acc))

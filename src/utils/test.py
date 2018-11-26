@@ -1,22 +1,33 @@
+import numpy as np
 import torch
 from torch.autograd import Variable
 
-def test(model, test_loader, criterion, n_episodes, use_gpu):
+from tqdm import tqdm
 
-  model.eval()
 
-  avg_acc = 0
-  for idx, (inputs, targets) in enumerate(test_loader):
+def test(model, test_loader, criterion, n_epochs, n_episodes, use_gpu):
 
-      if use_gpu:
-          inputs = inputs.cuda()
-          targets = targets.cuda()
+    all_avg_acc = []
+    for epoch in range(n_epochs):
+        progress_bar = tqdm(test_loader, desc="Epoch {}".format(epoch))
+        progress_bar.set_description("Epoch {}".format(epoch))
+        model.eval()
 
-      inputs, targets = Variable(inputs), Variable(targets)
-      predictions = model(inputs)
+        avg_acc = 0
+        for idx, test_batch in enumerate(progress_bar):
+            
+            inputs, targets = test_batch
 
-      loss, test_accuracy = criterion(predictions, targets)
+            if use_gpu:
+                inputs = inputs.cuda()
+                targets = targets.cuda()
 
-      avg_acc += test_accuracy.cpu().data.numpy() / n_episodes
+            inputs, targets = Variable(inputs), Variable(targets)
+            predictions = model(inputs)
 
-  return avg_acc
+            _, test_accuracy = criterion(predictions, targets)
+
+            avg_acc += test_accuracy.cpu().data.numpy() / n_episodes
+
+        all_avg_acc.append(avg_acc)
+    return np.mean(all_avg_acc)
