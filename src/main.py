@@ -1,5 +1,3 @@
-import math
-
 import torch
 import copy
 from torch import optim
@@ -9,8 +7,9 @@ from tqdm import tqdm
 from protonet import ProtoNet
 from prototypical_loss import PrototypicalLoss
 from torchvision import transforms
-from utils.dataloading import load_dataloaders, load_split_datasets
-from utils.graphs import History
+from utils.dataloading import load_dataloaders, load_split_datasets, load_test_set, load_test_dataloaders
+
+from utils.test import test
 
 #*################################
 #*           Variables           #
@@ -24,6 +23,8 @@ test_path = '../mini_imagenet/csvsplits/test.csv'
 separator = ';'
 filename = 'best_protonet.pt'
 
+EXECUTE_TRAINING = 1
+
 #*############################ 
 #*       Hyperparameters     #
 #*############################
@@ -34,7 +35,7 @@ learning_rate = 1e-3
 n_epochs = 600
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 n_episodes = 100
-classes_per_it = (40, n_samples_per_class, n_samples_per_class)
+classes_per_it = (32, 8, 8)
 
 #*################################
 #*     Chargement du dataset     #
@@ -44,13 +45,21 @@ transform = transforms.Compose([
                                 transforms.Resize((84, 84)),
                                 transforms.ToTensor()
                                ])
-train_set, valid_set, test_set = load_split_datasets(paths, n_support, n_query, transforms=transform)
 
-sets = {'train_set': train_set, 'valid_set': valid_set, 'test_set': test_set}
-train_loader, valid_loader, test_loader = load_dataloaders(sets,
-                                                           samples_per_class=n_samples_per_class,
-                                                           n_episodes=n_episodes,
-                                                           classes_per_it=classes_per_it)
+if EXECUTE_TRAINING:                               
+    train_set, valid_set, test_set = load_split_datasets(paths, n_support, n_query, transforms=transform)
+
+    sets = {'train_set': train_set, 'valid_set': valid_set, 'test_set': test_set}
+    train_loader, valid_loader, test_loader = load_dataloaders(sets,
+                                                            samples_per_class=n_samples_per_class,
+                                                            n_episodes=n_episodes,
+                                                            classes_per_it=classes_per_it)
+else:
+    test_set = load_test_set(paths, n_support, n_query, transforms=transform)
+    test_loader = load_test_dataloaders(test_set,
+                                    samples_per_class=n_samples_per_class,
+                                    n_episodes=n_episodes,
+                                    classes_per_it=8)
 
 model = ProtoNet()
 
@@ -74,52 +83,65 @@ criterion = PrototypicalLoss(n_support)
 #*#################################
 #*           Entrainement         #
 #*#################################
-history = History()
-best_model_weights = None
-best_avg_acc = 0
-for epoch in range(n_epochs):
-    progress_bar = tqdm(train_loader, desc="Epoch {}".format(epoch))
-    progress_bar.set_description("Epoch {}".format(epoch))
+if EXECUTE_TRAINING:
+    best_model_weights = None
+    best_avg_acc = 0
+    for epoch in range(n_epochs):
+        progress_bar = tqdm(train_loader, desc="Epoch {}".format(epoch))
+        progress_bar.set_description("Epoch {}".format(epoch))
 
-    model.train()
-    avg_acc = 0
-    for idx, (inputs, targets) in enumerate(progress_bar):
+        model.train()
+        avg_train_acc = 0
+        avg_val_acc = 0
+        for (idx, train_batch), (val_idx, val_batch) in zip(enumerate(progress_bar), enumerate(valid_loader)):
 
-        if use_gpu:
-            inputs = inputs.cuda()
-            targets = targets.cuda()
+            inputs, targets = train_batch
+            val_inputs, val_targets = val_batch
 
-        optimizer.zero_grad()
+            if use_gpu:
+                inputs = inputs.cuda()
+                targets = targets.cuda()
+                val_inputs = val_inputs.cuda()
+                val_targets = val_targets.cuda()
 
-        inputs, targets = Variable(inputs), Variable(targets)
-        predictions = model(inputs)
+            optimizer.zero_grad()
 
-        loss, train_accuracy = criterion(predictions, targets)
-        loss.backward()
-        optimizer.step()
+            inputs, targets = Variable(inputs), Variable(targets)
+            predictions = model(inputs)
 
-        avg_acc += train_accuracy.cpu().data.numpy() / n_episodes
-        progress_bar.set_postfix({'loss': loss.cpu().data.numpy(), 'acc':avg_acc})
+            loss, train_accuracy = criterion(predictions, targets)
+            loss.backward()
+            optimizer.step()
 
-    # if scheduler:
-    #       scheduler.step(val_loss)
+            avg_train_acc += train_accuracy.cpu().data.numpy() / n_episodes
 
-    # Deep copy the best model
-    if avg_acc > best_avg_acc:
-         best_avg_acc = avg_acc
-         best_model_weights = copy.deepcopy(model.state_dict())
+            val_inputs, val_targets = Variable(val_inputs), Variable(val_targets)
+            val_predictions = model(val_inputs)
 
-print("Training ended. Saving the best model.")
-torch.save(best_model_weights, filename)
-print("Best model saved.")
+            _, val_acc = criterion(val_predictions, val_targets)
+            avg_val_acc += val_acc.cpu().data.numpy() / n_episodes
 
-    # history.save(train_acc, val_acc, train_loss, val_loss, optimizer.param_groups[0]['lr'])
+            progress_bar.set_postfix({'loss': loss.cpu().data.numpy(), 't_acc':avg_train_acc, 'v_acc':avg_val_acc})
 
+        # if scheduler:
+        #       scheduler.step(val_loss)
+
+        # Deep copy the best model
+        if avg_val_acc > best_avg_acc:
+            best_avg_acc = avg_val_acc
+            best_model_weights = copy.deepcopy(model.state_dict())
+
+    print("Training ended. Saving the best model.")
+    torch.save(best_model_weights, filename)
+    print("Best model saved.")
 
 #*#################################
 #*             Tests              #
 #*#################################
-# # Charger le meilleur modele enregistre
-# state_dict = load(save_path)
-# net.load_state_dict(state_dict)
-# print('Précision en test: {:.2f}'.format(test(net, criterion, test_set, batch_size)))
+# Charger le meilleur modele enregistre
+state_dict = torch.load(filename)
+model.load_state_dict(state_dict)
+
+avg_acc = test(model, test_loader, criterion, n_episodes, use_gpu)
+
+print('Précision en test: {:.2f}'.format(avg_acc))

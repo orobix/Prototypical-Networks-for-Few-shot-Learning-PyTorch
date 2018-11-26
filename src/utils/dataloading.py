@@ -20,15 +20,18 @@ def load_split_datasets(paths, n_supports, n_queries, separator=';', transforms=
                             n_queries=n_queries,
                             transforms=transforms)
 
-    test_set = MiniImageNet(csv_file=paths['test_dir'],
-                            separator=separator,
-                            root_dir=paths['root_dir'],
-                            n_supports=n_supports,
-                            n_queries=n_queries,
-                            transforms=transforms)
+    test_set = load_test_set(paths, n_supports, n_queries, separator, transforms)
 
     return train_set, valid_set, test_set
 
+def load_test_set(paths, n_supports, n_queries, separator=';', transforms=None):
+    test_set = MiniImageNet(csv_file=paths['test_dir'],
+                        separator=separator,
+                        root_dir=paths['root_dir'],
+                        n_supports=n_supports,
+                        n_queries=n_queries,
+                        transforms=transforms)
+    return test_set
 
 def load_dataloaders(sets, samples_per_class=10, n_episodes=100, classes_per_it=(60, 10, 10)):
 
@@ -46,18 +49,25 @@ def load_dataloaders(sets, samples_per_class=10, n_episodes=100, classes_per_it=
                                              num_samples=samples_per_class,
                                              iterations=n_episodes)
 
-    test_sampler = PrototypicalBatchSampler(labels=test_set.all_targets,
-                                            classes_per_it=classes_per_it[1],
-                                            num_samples=samples_per_class,
-                                            iterations=n_episodes)
-
     train_loader = torch.utils.data.DataLoader(sets['train_set'],
                                                batch_sampler=train_sampler)
 
     valid_loader = torch.utils.data.DataLoader(sets['valid_set'],
                                                batch_sampler=valid_sampler)
 
-    test_loader = torch.utils.data.DataLoader(sets['test_set'],
-                                              batch_sampler=test_sampler)
+    test_loader = load_test_dataloaders(test_set, samples_per_class, n_episodes, classes_per_it[2])
 
     return train_loader, valid_loader, test_loader
+
+
+def load_test_dataloaders(test_set, samples_per_class=10, n_episodes=100, classes_per_it=10):
+
+    test_sampler = PrototypicalBatchSampler(labels=test_set.all_targets,
+                                            classes_per_it=classes_per_it,
+                                            num_samples=samples_per_class,
+                                            iterations=n_episodes)
+
+    test_loader = torch.utils.data.DataLoader(test_set,
+                                            batch_sampler=test_sampler)
+
+    return test_loader
