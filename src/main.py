@@ -1,9 +1,5 @@
-import copy
-import sys
-
 import torch
 from torch.autograd import Variable
-from tqdm import tqdm
 
 from protonet import ProtoNet
 from utils.few_shot_parameters import FewShotParameters
