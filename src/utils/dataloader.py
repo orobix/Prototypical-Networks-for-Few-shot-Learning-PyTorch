@@ -5,39 +5,26 @@ from utils.mini_image_net import MiniImageNet
 from utils.prototypical_batch_sampler import PrototypicalBatchSampler
 
 
-def load_split_datasets(paths, n_supports, n_queries, separator=';', transforms=None):
+def load_meta_train_set(paths, separator=';'):
     train_set = MiniImageNet(csv_file=paths['train_dir'],
                             separator=separator,
-                            root_dir=paths['root_dir'],
-                            n_supports=n_supports,
-                            n_queries=n_queries,
-                            transforms=transforms)
+                            root_dir=paths['root_dir'])
 
     valid_set = MiniImageNet(csv_file=paths['valid_dir'],
                             separator=separator,
-                            root_dir=paths['root_dir'],
-                            n_supports=n_supports,
-                            n_queries=n_queries,
-                            transforms=transforms)
+                            root_dir=paths['root_dir'])
 
-    test_set = load_test_set(paths, n_supports, n_queries, separator, transforms)
+    return train_set, valid_set
 
-    return train_set, valid_set, test_set
-
-def load_test_set(paths, n_supports, n_queries, separator=';', transforms=None):
+def load_meta_test_set(paths, separator=';'):
     test_set = MiniImageNet(csv_file=paths['test_dir'],
-                        separator=separator,
-                        root_dir=paths['root_dir'],
-                        n_supports=n_supports,
-                        n_queries=n_queries,
-                        transforms=transforms)
+                            separator=separator,
+                            root_dir=paths['root_dir'])
     return test_set
 
-def load_dataloaders(sets, samples_per_class=10, n_episodes=100, classes_per_it=(60, 10, 10)):
-
+def load_meta_train_dataloaders(sets, samples_per_class, n_episodes=100, classes_per_it:
     train_set = sets['train_set']
     valid_set = sets['valid_set']
-    test_set = sets['test_set']
 
     train_sampler = PrototypicalBatchSampler(labels=train_set.all_targets,
                                              classes_per_it=classes_per_it[0],
@@ -49,25 +36,22 @@ def load_dataloaders(sets, samples_per_class=10, n_episodes=100, classes_per_it=
                                              num_samples=samples_per_class,
                                              iterations=n_episodes)
 
-    train_loader = torch.utils.data.DataLoader(sets['train_set'],
+    train_loader = torch.utils.data.DataLoader(train_set,
                                                batch_sampler=train_sampler)
 
-    valid_loader = torch.utils.data.DataLoader(sets['valid_set'],
+    valid_loader = torch.utils.data.DataLoader(valid_set,
                                                batch_sampler=valid_sampler)
 
-    test_loader = load_test_dataloaders(test_set, samples_per_class, n_episodes, classes_per_it[2])
-
-    return train_loader, valid_loader, test_loader
+    return train_loader, valid_loader
 
 
-def load_test_dataloaders(test_set, samples_per_class=10, n_episodes=100, classes_per_it=10):
-
+def load_meta_test_dataloader(test_set, samples_per_class, n_episodes=100, classes_per_it):
     test_sampler = PrototypicalBatchSampler(labels=test_set.all_targets,
                                             classes_per_it=classes_per_it,
                                             num_samples=samples_per_class,
                                             iterations=n_episodes)
 
     test_loader = torch.utils.data.DataLoader(test_set,
-                                            batch_sampler=test_sampler)
+                                              batch_sampler=test_sampler)
 
     return test_loader

@@ -4,12 +4,10 @@ from torch.autograd import Variable
 
 from tqdm import tqdm
 
-
-def test(model, test_loader, criterion, n_epochs, n_episodes, use_gpu):
-
+def meta_test(model, params, use_gpu):
     all_avg_acc = []
-    for epoch in range(n_epochs):
-        progress_bar = tqdm(test_loader, desc="Epoch {}".format(epoch))
+    for epoch in range(params.n_epochs):
+        progress_bar = tqdm(params.test_loader, desc="Epoch {}".format(epoch))
         progress_bar.set_description("Epoch {}".format(epoch))
         model.eval()
 
@@ -25,9 +23,9 @@ def test(model, test_loader, criterion, n_epochs, n_episodes, use_gpu):
             inputs, targets = Variable(inputs), Variable(targets)
             predictions = model(inputs)
 
-            _, test_accuracy = criterion(predictions, targets)
+            _, test_accuracy = params.criterion(predictions, targets)
 
-            avg_acc += test_accuracy.cpu().data.numpy() / n_episodes
+            avg_acc += test_accuracy.cpu().data.numpy() / params.n_episodes
 
         all_avg_acc.append(avg_acc)
     return np.mean(all_avg_acc)
