@@ -1,10 +1,12 @@
 import os
-import warnings # Ignore warnings
+import warnings  # Ignore warnings
 
 import pandas as pd
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
+
+from torchvision import transforms
 
 warnings.filterwarnings("ignore")
 
@@ -12,7 +14,7 @@ warnings.filterwarnings("ignore")
 class MiniImageNet(Dataset):
     """Mini Image Net dataset."""
 
-    def __init__(self, csv_file, separator, root_dir, n_supports, n_queries, transforms=None):
+    def __init__(self, csv_file, separator, root_dir):
         """
         Args:
             csv_file (string): Path to the csv file with annotations.
@@ -22,13 +24,17 @@ class MiniImageNet(Dataset):
         """
         self.csv_mappings = pd.read_csv(csv_file, sep=separator, header=None, squeeze=True)
         self.root_dir = root_dir
-        self.n_supports = n_supports
-        self.n_queries = n_queries
-        self.transforms = transforms
 
         all_class_paths = [os.path.join(self.root_dir, class_name) for class_name in self.csv_mappings]
         self.all_targets = []
         self.all_image_tensors = []
+
+        load_file_to_pil = lambda filepath: Image.open(filepath)
+        self.transform = transforms.Compose([
+                                        load_file_to_pil,
+                                        transforms.Resize((84, 84)),
+                                        transforms.ToTensor()
+                                      ])
 
         n_class = len(all_class_paths)
 
@@ -44,9 +50,7 @@ class MiniImageNet(Dataset):
 
             self.all_targets.extend(target_of_class)
 
-            image_tensors_from_path = [pil_loader(full_path) for full_path in full_file_paths_of_class]
-            image_tensors_from_path = [self.transforms(image_obj) for image_obj in image_tensors_from_path]
-
+            image_tensors_from_path = [self.transform(full_path) for full_path in full_file_paths_of_class]
             self.all_image_tensors.extend(image_tensors_from_path)
 
         self.all_targets = torch.LongTensor(self.all_targets)
@@ -61,9 +65,3 @@ class MiniImageNet(Dataset):
         y = self.all_targets[idx]
         
         return x, y
-
-
-def pil_loader(path):
-    with open(path, 'rb') as f:
-        img = Image.open(f)
-        return img.convert('RGB')
