@@ -22,7 +22,7 @@ def load_meta_test_set(paths, separator=';'):
                             root_dir=paths['root_dir'])
     return test_set
 
-def load_meta_train_dataloaders(sets, samples_per_class, n_episodes=100, classes_per_it:
+def load_meta_train_dataloaders(sets, samples_per_class, n_episodes, classes_per_it):
     train_set = sets['train_set']
     valid_set = sets['valid_set']
 
@@ -45,7 +45,7 @@ def load_meta_train_dataloaders(sets, samples_per_class, n_episodes=100, classes
     return train_loader, valid_loader
 
 
-def load_meta_test_dataloader(test_set, samples_per_class, n_episodes=100, classes_per_it):
+def load_meta_test_dataloader(test_set, samples_per_class, n_episodes, classes_per_it):
     test_sampler = PrototypicalBatchSampler(labels=test_set.all_targets,
                                             classes_per_it=classes_per_it,
                                             num_samples=samples_per_class,
