@@ -1,5 +1,6 @@
 import torch
 import copy
+import math
 from torch import optim
 from torch.autograd import Variable
 
@@ -8,6 +9,7 @@ from tqdm import tqdm
 def meta_train(model, params, use_gpu):
     best_model_weights = None
     best_avg_acc = 0
+    best_avg_loss = math.inf
     patience_counter = 0
 
     for epoch in range(params.n_epochs):
@@ -18,6 +20,7 @@ def meta_train(model, params, use_gpu):
         if params.scheduler:
             params.scheduler.step()
 
+        avg_train_loss = math.inf
         avg_train_acc = 0
         avg_val_acc = 0
         for (idx, train_batch), (val_idx, val_batch) in zip(enumerate(progress_bar), enumerate(params.valid_loader)):
@@ -48,14 +51,16 @@ def meta_train(model, params, use_gpu):
             val_predictions = model(val_inputs)
 
             _, val_acc = params.criterion(val_predictions, val_targets)
+
+            avg_train_loss += loss.cpu().data.numpy() / params.n_episodes
             avg_val_acc += val_acc.cpu().data.numpy() / params.n_episodes
 
-            progress_bar.set_postfix({'loss': loss.cpu().data.numpy(), 't_acc':avg_train_acc, 'v_acc':avg_val_acc})
+            progress_bar.set_postfix({'loss': avg_train_loss, 't_acc':avg_train_acc, 'v_acc':avg_val_acc})
 
         # Deep copy the best model
-        if avg_val_acc > best_avg_acc:
+        if avg_train_loss < best_avg_loss:
             patience_counter = 0
-            best_avg_acc = avg_val_acc
+            best_avg_loss = avg_train_loss
             best_model_weights = copy.deepcopy(model.state_dict())
         else:
             patience_counter += 1
