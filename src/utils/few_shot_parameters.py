@@ -45,6 +45,7 @@ class FewShotParameters():
             n_ways = 5
             samples_per_class = n_support + n_query
 
+            self.criterion = PrototypicalLoss(n_support)
             self.n_episodes = 100
             self.n_epochs = 6
 
