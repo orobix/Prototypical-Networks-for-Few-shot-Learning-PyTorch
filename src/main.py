@@ -10,8 +10,7 @@ use_gpu = torch.cuda.is_available()
 paths = {'root_dir': '../mini_imagenet/images',
          'train_dir': '../mini_imagenet/csvsplits/train.csv',
          'valid_dir': '../mini_imagenet/csvsplits/valid.csv',
-         'test_dir': '../mini_imagenet/csvsplits/test.csv'
-        }
+         'test_dir': '../mini_imagenet/csvsplits/test.csv'}
 best_learner_parameters_file = 'best_protonet.pt'
 
 # Control parameters
