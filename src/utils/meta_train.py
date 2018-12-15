@@ -40,8 +40,10 @@ def meta_train(model, params, use_gpu):
             predictions = model(inputs)
 
             train_loss, train_accuracy = params.criterion(predictions, targets)
-            train_loss += params.l1_lambda * sum([abs(p[1].cpu().data).sum() for p in model.named_parameters()]).item()
-            train_loss.backward()
+			
+            weights_absolute_sum = params.l1_lambda * sum([abs(p[1].cpu().data).sum() for p in model.named_parameters()]).item()
+            regularized_loss = train_loss + weights_absolute_sum
+            regularized_loss.backward()
             params.optimizer.step()
 
             avg_train_acc += train_accuracy.cpu().data.numpy() / params.n_episodes

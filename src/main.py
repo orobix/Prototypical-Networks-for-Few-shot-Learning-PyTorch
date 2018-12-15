@@ -38,3 +38,5 @@ if EXECUTE_TEST:
     model.load_state_dict(state_dict)
     meta_test_parameters = FewShotParameters(model, 'test', paths)
     avg_acc = meta_test(model, meta_test_parameters, use_gpu)
+    print('moyenne des accuracy en test: {}'.format(avg_acc))
+	
