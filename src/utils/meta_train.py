@@ -40,6 +40,7 @@ def meta_train(model, params, use_gpu):
             predictions = model(inputs)
 
             train_loss, train_accuracy = params.criterion(predictions, targets)
+            train_loss += params.l1_lambda * sum([abs(p[1].cpu().data).sum() for p in model.named_parameters()]).item()
             train_loss.backward()
             params.optimizer.step()
 
