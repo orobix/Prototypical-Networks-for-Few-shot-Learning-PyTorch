@@ -19,15 +19,18 @@ EXECUTE_TRAINING = 1
 EXECUTE_TEST = 1
 GRID_SEARCH = 0
 
-model = ProtoNet()
 
-if use_gpu:
-    model = model.cuda()
+def createModel():
+    model = ProtoNet()
+    if use_gpu:
+        model = model.cuda()
+    return model
 
 #*#################################
 #*             Train              #
 #*#################################
 if EXECUTE_TRAINING:
+    model = createModel()
     meta_train_parameters = FewShotParameters(model, 'train', paths)
     best_learner_weights = meta_train(model, meta_train_parameters, use_gpu)
     torch.save(best_learner_weights, best_learner_parameters_file)
@@ -36,6 +39,7 @@ if EXECUTE_TRAINING:
 #*             Tests              #
 #*#################################
 if EXECUTE_TEST:
+    model = createModel()
     state_dict = torch.load(best_learner_parameters_file)
     model.load_state_dict(state_dict)
     meta_test_parameters = FewShotParameters(model, 'test', paths)
@@ -47,12 +51,12 @@ if EXECUTE_TEST:
 #*             Grid               #
 #*#################################
 if GRID_SEARCH:
-    meta_train_parameters = FewShotParameters(model, 'train', paths)
-
     best_test_acc = 0
     best_lambda = 0
     lambdas = numpy.logspace(-2, 1, 10)
     for l in lambdas:
+        model = createModel()
+        meta_train_parameters = FewShotParameters(model, 'train', paths)
         meta_train_parameters.l1_lambda = l
         best_learner_weights = meta_train(model, meta_train_parameters, use_gpu)
         torch.save(best_learner_weights, "grid_search_lambda{}".format(l))
