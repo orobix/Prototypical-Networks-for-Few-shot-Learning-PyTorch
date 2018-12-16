@@ -1,3 +1,4 @@
+import numpy
 import torch
 from torch.autograd import Variable
 
@@ -16,6 +17,7 @@ best_learner_parameters_file = 'best_protonet.pt'
 # Control parameters
 EXECUTE_TRAINING = 1
 EXECUTE_TEST = 1
+GRID_SEARCH = 0
 
 model = ProtoNet()
 
@@ -38,3 +40,28 @@ if EXECUTE_TEST:
     model.load_state_dict(state_dict)
     meta_test_parameters = FewShotParameters(model, 'test', paths)
     avg_acc = meta_test(model, meta_test_parameters, use_gpu)
+    print('moyenne des accuracy en test: {}'.format(avg_acc))
+
+
+#*#################################
+#*             Grid               #
+#*#################################
+if GRID_SEARCH:
+    meta_train_parameters = FewShotParameters(model, 'train', paths)
+
+    best_test_acc = 0
+    best_lambda = 0
+    lambdas = numpy.logspace(-2, 1, 10)
+    for l in lambdas:
+        meta_train_parameters.l1_lambda = l
+        best_learner_weights = meta_train(model, meta_train_parameters, use_gpu)
+        torch.save(best_learner_weights, "grid_search_lambda{}".format(l))
+
+        meta_test_parameters = FewShotParameters(model, 'test', paths)
+        avg_acc = meta_test(model, meta_test_parameters, use_gpu)
+        print('moyenne des accuracy en test: {} avec lambda={}'.format(avg_acc, l))
+        if best_test_acc < avg_acc:
+            best_lambda = l
+
+    print("Meilleure valeur de lambda: {}".format(best_lambda))
+

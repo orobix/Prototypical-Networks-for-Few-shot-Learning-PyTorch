@@ -18,6 +18,8 @@ class FewShotParameters():
             self.n_episodes = 100
             self.PATIENCE_LIMIT = 20
             self.n_epochs = 10000
+            
+            self.l1_lambda = 0.1
 
             train_set, valid_set = load_meta_train_set(paths)
 

@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 def meta_train(model, params, use_gpu):
     best_model_weights = None
-    best_avg_loss = math.inf
+    best_valid_loss = math.inf
     patience_counter = 0
 
     for epoch in range(params.n_epochs):
@@ -40,7 +40,10 @@ def meta_train(model, params, use_gpu):
             predictions = model(inputs)
 
             train_loss, train_accuracy = params.criterion(predictions, targets)
-            train_loss.backward()
+
+            weights_absolute_sum = params.l1_lambda * sum([abs(p[1].cpu().data).sum() for p in model.named_parameters()]).item()
+            regularized_loss = train_loss + weights_absolute_sum
+            regularized_loss.backward()
             params.optimizer.step()
 
             avg_train_acc += train_accuracy.cpu().data.numpy() / params.n_episodes
@@ -48,18 +51,22 @@ def meta_train(model, params, use_gpu):
             # Validation of the training
             val_inputs, val_targets = Variable(val_inputs), Variable(val_targets)
             val_predictions = model(val_inputs)
-
-            _, val_acc = params.criterion(val_predictions, val_targets)
-
             avg_train_loss += train_loss.cpu().data.numpy() / params.n_episodes
+
+            val_loss, val_acc = params.criterion(val_predictions, val_targets)
+            val_loss = val_loss.cpu().data.numpy()
+
             avg_val_acc += val_acc.cpu().data.numpy() / params.n_episodes
 
-            progress_bar.set_postfix({'loss': avg_train_loss, 't_acc':avg_train_acc, 'v_acc':avg_val_acc})
+            progress_bar.set_postfix({'train-loss': avg_train_loss,
+                                      'val-loss': val_loss,
+                                      't_acc': avg_train_acc,
+                                      'v_acc': avg_val_acc})
 
         # Deep copy the best model
-        if avg_train_loss < best_avg_loss:
+        if val_loss < best_valid_loss:
             patience_counter = 0
-            best_avg_loss = avg_train_loss
+            best_valid_loss = val_loss
             best_model_weights = copy.deepcopy(model.state_dict())
         else:
             patience_counter += 1
