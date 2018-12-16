@@ -58,7 +58,7 @@ def meta_train(model, params, use_gpu):
             avg_val_acc += val_acc.cpu().data.numpy() / params.n_episodes
 
             progress_bar.set_postfix({'train-loss': avg_train_loss,
-                                      'val-loss': val_loss,
+                                      'val-loss': val_loss.cpu().data.numpy(),
                                       't_acc': avg_train_acc,
                                       'v_acc': avg_val_acc})
 
