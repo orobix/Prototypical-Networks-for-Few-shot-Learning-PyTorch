@@ -15,9 +15,9 @@ paths = {'root_dir': '../mini_imagenet/images',
 best_learner_parameters_file = 'best_protonet.pt'
 
 # Control parameters
-EXECUTE_TRAINING = 0
-EXECUTE_TEST = 0
-GRID_SEARCH = 1
+EXECUTE_TRAINING = 1
+EXECUTE_TEST = 1
+GRID_SEARCH = 0
 
 model = ProtoNet()
 
