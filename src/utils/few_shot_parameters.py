@@ -30,7 +30,7 @@ class FewShotParameters():
         n_support = 5
         n_query = 15
         samples_per_class = n_support + n_query
-        n_ways = (5, 5)
+        n_ways = (5,5)
 
         train_set, valid_set = load_meta_train_set(paths)
 

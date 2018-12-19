@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 def meta_train(model, params, use_gpu):
     best_model_weights = None
-    best_valid_loss = math.inf
+    best_valid_acc = 0
     patience_counter = 0
 
     for epoch in range(params.n_epochs):
@@ -62,15 +62,15 @@ def meta_train(model, params, use_gpu):
                                       'v_acc': avg_val_acc})
 
         # Deep copy the best model
-        if val_loss < best_valid_loss:
+        if val_acc > best_valid_acc:
             patience_counter = 0
-            best_valid_loss = val_loss
+            best_valid_acc = val_acc
             best_model_weights = copy.deepcopy(model.state_dict())
         else:
             patience_counter += 1
 
         if patience_counter >= params.PATIENCE_LIMIT:
-            return best_model_weights
+            return best_model_weights, best_valid_acc
 
-    return best_model_weights
+    return best_model_weights, best_valid_acc
 

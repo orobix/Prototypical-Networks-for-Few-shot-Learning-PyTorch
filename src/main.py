@@ -13,6 +13,8 @@ paths = {'root_dir': '../mini_imagenet/images',
          'valid_dir': '../mini_imagenet/csvsplits/valid.csv',
          'test_dir': '../mini_imagenet/csvsplits/test.csv'}
 best_learner_parameters_file = 'best_protonet.pt'
+best_learner_grid_search_parameters_file = 'best_protonet_gs.pt'
+
 
 # Control parameters
 EXECUTE_TRAINING = 0
@@ -33,7 +35,7 @@ if EXECUTE_TRAINING:
     model = createModel()
     meta_train_params = FewShotParameters()
     meta_train_params.get_train_parameters(model, paths)
-    best_learner_weights = meta_train(model, meta_train_params, use_gpu)
+    best_learner_weights, _ = meta_train(model, meta_train_params, use_gpu)
     torch.save(best_learner_weights, best_learner_parameters_file)
 
 #*#################################
@@ -53,24 +55,31 @@ if EXECUTE_TEST:
 #*             Grid               #
 #*#################################
 if GRID_SEARCH:
-    best_test_acc = 0
+    best_learner_weights = None
+    best_valid_acc = 0
     best_lambda = 0
     lambdas = numpy.logspace(-2, 1, 10)
+    model = createModel()
     meta_train_params = FewShotParameters()
     meta_train_params.get_train_parameters(model, paths)
-    meta_test_params = FewShotParameters()
-    meta_test_params = meta_test_params.get_test_parameters(paths)
 
     for l in lambdas:
-        model = createModel()
         meta_train_params.l1_lambda = l
-        best_learner_weights = meta_train(model, meta_train_params, use_gpu)
-        torch.save(best_learner_weights, "./grid_search/model_lambda_{:10.4f}.pt".format(l))
+        learner_weights, valid_acc = meta_train(model, meta_train_params, use_gpu)
+        print('Current lambda %.5f and valid accuracy %.5f' % (l, valid_acc))
+        if valid_acc > best_valid_acc:
+            best_valid_acc = valid_acc
+            best_learner_weights = learner_weights
+            best_lambda = l
+            torch.save(learner_weights, best_learner_grid_search_parameters_file)
 
-    avg_acc = meta_test(model, meta_test_params, use_gpu)
-    print('moyenne des accuracy en test: {} avec lambda={}'.format(avg_acc, l))
-    if best_test_acc < avg_acc:
-        best_lambda = l
-
-    print("Meilleure valeur de lambda: {}".format(best_lambda))
+    meta_test_params = FewShotParameters()
+    meta_test_params = meta_test_params.get_test_parameters(paths)
+    model = createModel()
+    state_dict = torch.load(best_learner_grid_search_parameters_file)
+    model.load_state_dict(state_dict)
+    test_acc = meta_test(model, meta_test_params, use_gpu)
+    print('Test accuracy: {}'.format(test_acc))
+    print("Best model validation accuracy: {}".format(best_valid_acc))
+    print("Best lambda value: {}".format(best_lambda))
 
