@@ -1,7 +1,5 @@
-import torch
 import copy
 import math
-from torch import optim
 from torch.autograd import Variable
 
 from tqdm import tqdm
