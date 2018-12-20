@@ -61,7 +61,7 @@ if EXECUTE_TEST:
 if PROGRESSIVE_REGULARIZATON:
     best_learner_weights = None
     best_valid_acc = 0
-    best_lambda = 0
+    applied_lambdas = []
     lambdas = numpy.logspace(-2, 1, 10)
 
     sets = get_training_and_validation_sets(paths) # instancié une seule fois
@@ -76,7 +76,7 @@ if PROGRESSIVE_REGULARIZATON:
         if valid_acc > best_valid_acc:
             best_valid_acc = valid_acc
             best_learner_weights = learner_weights
-            best_lambda = l
+            applied_lambdas.append(l)
             torch.save(learner_weights, best_learner_grid_search_parameters_file)
 
     meta_test_params = FewShotParameters()
@@ -88,5 +88,4 @@ if PROGRESSIVE_REGULARIZATON:
     test_acc = meta_test(model, meta_test_params, use_gpu)
     print('Test accuracy: {}'.format(test_acc))
     print("Best model validation accuracy: {}".format(best_valid_acc))
-    print("Best lambda value: {}".format(best_lambda))
-
+    print("Applied lambda values (in order): {}".format(str(applied_lambdas)))
