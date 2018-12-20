@@ -28,9 +28,7 @@ def createModel():
         model = model.cuda()
     return model
 
-#*#################################
-#*             Train              #
-#*#################################
+
 if EXECUTE_TRAINING:
     model = createModel()
     meta_train_params = FewShotParameters()
@@ -39,9 +37,7 @@ if EXECUTE_TRAINING:
     best_learner_weights, _ = meta_train(model, meta_train_params, use_gpu)
     torch.save(best_learner_weights, best_learner_parameters_file)
 
-#*#################################
-#*             Tests              #
-#*#################################
+
 if EXECUTE_TEST:
     model = createModel()
     state_dict = torch.load(best_learner_parameters_file)
@@ -55,14 +51,13 @@ if EXECUTE_TEST:
     print('Average test accuracy: {}'.format(avg_acc))
 
 
-#*#################################
-#*             Grid               #
-#*#################################
 if PROGRESSIVE_REGULARIZATON:
     best_learner_weights = None
     best_valid_acc = 0
     applied_lambdas = []
-    lambdas = numpy.logspace(-2, 1, 10)
+    
+    lambdas = [0] # Start the training without any regularization
+    lambdas.extend(numpy.logspace(-2, 1, 10))
 
     sets = get_training_and_validation_sets(paths) # instancié une seule fois
 
