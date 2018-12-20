@@ -39,7 +39,7 @@ class MiniImageNet(Dataset):
         n_class = len(all_class_paths)
 
         for i, current_class_dir in enumerate(all_class_paths):
-            print("debut du load des images de la classe {} sur {} en RAM".format(i, n_class))
+            print("Loading {}/{} on RAM".format(i + 1, n_class))
 
             full_file_paths_of_class = next(os.walk(current_class_dir))[2]
             full_file_paths_of_class = [os.path.join(current_class_dir, image_filename)

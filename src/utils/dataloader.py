@@ -55,3 +55,9 @@ def load_meta_test_dataloader(test_set, samples_per_class, n_episodes, classes_p
                                               batch_sampler=test_sampler)
 
     return test_loader
+
+def get_training_and_validation_sets(paths):
+    train_set, valid_set = load_meta_train_set(paths)
+    sets = {'train_set': train_set,
+            'valid_set': valid_set}
+    return sets

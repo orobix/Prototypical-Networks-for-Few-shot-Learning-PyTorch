@@ -1,11 +1,11 @@
 import numpy
 import torch
-from torch.autograd import Variable
 
 from protonet import ProtoNet
 from utils.few_shot_parameters import FewShotParameters
 from utils.meta_test import meta_test
 from utils.meta_train import meta_train
+from utils.dataloader import load_meta_train_set, load_meta_test_set, get_training_and_validation_sets
 
 use_gpu = torch.cuda.is_available()
 paths = {'root_dir': '../mini_imagenet/images',
@@ -13,11 +13,13 @@ paths = {'root_dir': '../mini_imagenet/images',
          'valid_dir': '../mini_imagenet/csvsplits/valid.csv',
          'test_dir': '../mini_imagenet/csvsplits/test.csv'}
 best_learner_parameters_file = 'best_protonet.pt'
+best_learner_grid_search_parameters_file = 'best_protonet_gs.pt'
+
 
 # Control parameters
-EXECUTE_TRAINING = 1
-EXECUTE_TEST = 1
-GRID_SEARCH = 0
+EXECUTE_TRAINING = 0
+EXECUTE_TEST = 0
+PROGRESSIVE_REGULARIZATON = 1
 
 
 def createModel():
@@ -26,46 +28,63 @@ def createModel():
         model = model.cuda()
     return model
 
-#*#################################
-#*             Train              #
-#*#################################
+
 if EXECUTE_TRAINING:
     model = createModel()
-    meta_train_parameters = FewShotParameters(model, 'train', paths)
-    best_learner_weights = meta_train(model, meta_train_parameters, use_gpu)
+    meta_train_params = FewShotParameters()
+    sets = get_training_and_validation_sets(paths)
+    meta_train_params.set_train_parameters(model, sets)
+    best_learner_weights, _ = meta_train(model, meta_train_params, use_gpu)
     torch.save(best_learner_weights, best_learner_parameters_file)
 
-#*#################################
-#*             Tests              #
-#*#################################
+
 if EXECUTE_TEST:
     model = createModel()
     state_dict = torch.load(best_learner_parameters_file)
     model.load_state_dict(state_dict)
-    meta_test_parameters = FewShotParameters(model, 'test', paths)
-    avg_acc = meta_test(model, meta_test_parameters, use_gpu)
-    print('moyenne des accuracy en test: {}'.format(avg_acc))
+    meta_test_params = FewShotParameters()
+
+    test_set = load_meta_test_set(paths)
+
+    meta_test_params.set_test_parameters(test_set)
+    avg_test_acc, test_std = meta_test(model, meta_test_params, use_gpu)
+    print('Average test accuracy: {} with a std of {}'.format(avg_test_acc * 100, test_std * 100))
 
 
-#*#################################
-#*             Grid               #
-#*#################################
-if GRID_SEARCH:
-    best_test_acc = 0
-    best_lambda = 0
-    lambdas = numpy.logspace(-2, 1, 10)
-    for l in lambdas:
-        model = createModel()
-        meta_train_parameters = FewShotParameters(model, 'train', paths)
-        meta_train_parameters.l1_lambda = l
-        best_learner_weights = meta_train(model, meta_train_parameters, use_gpu)
-        torch.save(best_learner_weights, "grid_search_lambda{}".format(l))
+if PROGRESSIVE_REGULARIZATON:
+    best_learner_weights = None
+    best_valid_acc = 0
+    applied_lambdas = []
+    
+    lambdas = [0] # Start the training without any regularization
+    lambdas.extend(numpy.logspace(-2, 1, 10))
 
-        meta_test_parameters = FewShotParameters(model, 'test', paths)
-        avg_acc = meta_test(model, meta_test_parameters, use_gpu)
-        print('moyenne des accuracy en test: {} avec lambda={}'.format(avg_acc, l))
-        if best_test_acc < avg_acc:
-            best_lambda = l
+    sets = get_training_and_validation_sets(paths) # instancié une seule fois
 
-    print("Meilleure valeur de lambda: {}".format(best_lambda))
+    model = createModel() # nouveau pour chaque lambda (vraie grid search)
+    meta_train_params = FewShotParameters()
+    meta_train_params.set_train_parameters(model, sets)
+    for idx, l in enumerate(lambdas):
+        meta_train_params.l1_lambda = l
+        learner_weights, valid_acc = meta_train(model, meta_train_params, use_gpu)
 
+        if idx == 0:
+            torch.save(learner_weights, best_learner_parameters_file)
+
+        print('Current lambda %.5f and valid accuracy %.5f' % (l, valid_acc * 100))
+        if valid_acc > best_valid_acc:
+            best_valid_acc = valid_acc
+            best_learner_weights = learner_weights
+            applied_lambdas.append(l)
+            torch.save(learner_weights, best_learner_grid_search_parameters_file)
+
+    meta_test_params = FewShotParameters()
+    test_set = load_meta_test_set(paths)
+    meta_test_params.set_test_parameters(test_set)
+    model = createModel()
+    state_dict = torch.load(best_learner_grid_search_parameters_file)
+    model.load_state_dict(state_dict)
+    test_acc, test_std = meta_test(model, meta_test_params, use_gpu)
+    print('Test accuracy: {} with a std of {}'.format(test_acc * 100, test_std * 100))
+    print("Best model validation accuracy: {}".format(best_valid_acc * 100))
+    print("Applied lambda values (in order): {}".format(str(applied_lambdas)))
