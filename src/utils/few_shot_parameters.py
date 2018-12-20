@@ -2,8 +2,7 @@ import torch
 from torch import optim
 
 from prototypical_loss import PrototypicalLoss
-from utils.dataloader import (load_meta_test_dataloader, load_meta_test_set,
-                              load_meta_train_dataloaders, load_meta_train_set)
+from utils.dataloader import (load_meta_test_dataloader, load_meta_train_dataloaders)
 
 
 class FewShotParameters():
@@ -20,8 +19,7 @@ class FewShotParameters():
 
         self.PATIENCE_LIMIT = 20
 
-
-    def get_train_parameters(self, model, paths):
+    def set_train_parameters(self, model, sets):
         self.n_episodes = 100
         self.n_epochs = 10000
         self.l1_lambda = 0.1
@@ -31,11 +29,6 @@ class FewShotParameters():
         n_query = 15
         samples_per_class = n_support + n_query
         n_ways = (5,5)
-
-        train_set, valid_set = load_meta_train_set(paths)
-
-        sets = {'train_set': train_set,
-                'valid_set': valid_set}
 
         self.train_loader, self.valid_loader = load_meta_train_dataloaders(sets,
                                                                            samples_per_class=samples_per_class,
@@ -52,7 +45,7 @@ class FewShotParameters():
                                                    step_size=20, # 20 epochs of 100 episodes
                                                    gamma=0.5)
 
-    def get_test_parameters(self, paths):
+    def set_test_parameters(self, test_set):
         n_support = 5
         n_query = 15
         n_ways = 5
@@ -61,8 +54,6 @@ class FewShotParameters():
         self.criterion = PrototypicalLoss(n_support)
         self.n_episodes = 100
         self.n_epochs = 6
-
-        test_set = load_meta_test_set(paths)
 
         self.test_loader = load_meta_test_dataloader(test_set,
                                                      samples_per_class=samples_per_class,
