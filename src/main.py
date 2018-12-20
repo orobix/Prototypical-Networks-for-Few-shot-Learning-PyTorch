@@ -5,7 +5,7 @@ from protonet import ProtoNet
 from utils.few_shot_parameters import FewShotParameters
 from utils.meta_test import meta_test
 from utils.meta_train import meta_train
-from utils.dataloader import load_meta_train_set, load_meta_test_set, get_training_and_validation_sets
+from utils.dataloader import load_meta_test_set, get_training_and_validation_sets
 
 use_gpu = torch.cuda.is_available()
 paths = {'root_dir': '../mini_imagenet/images',
@@ -22,15 +22,15 @@ EXECUTE_TEST = 0
 PROGRESSIVE_REGULARIZATON = 1
 
 
-def createModel():
-    model = ProtoNet()
+def create_model():
+    protonet_model = ProtoNet()
     if use_gpu:
-        model = model.cuda()
-    return model
+        protonet_model = protonet_model.cuda()
+    return protonet_model
 
 
 if EXECUTE_TRAINING:
-    model = createModel()
+    model = create_model()
     meta_train_params = FewShotParameters()
     sets = get_training_and_validation_sets(paths)
     meta_train_params.set_train_parameters(model, sets)
@@ -39,7 +39,7 @@ if EXECUTE_TRAINING:
 
 
 if EXECUTE_TEST:
-    model = createModel()
+    model = create_model()
     state_dict = torch.load(best_learner_parameters_file)
     model.load_state_dict(state_dict)
     meta_test_params = FewShotParameters()
@@ -56,12 +56,12 @@ if PROGRESSIVE_REGULARIZATON:
     best_valid_acc = 0
     applied_lambdas = []
     
-    lambdas = [0] # Start the training without any regularization
+    lambdas = [0]  # Start the training without any regularization
     lambdas.extend(numpy.logspace(-2, 1, 10))
 
-    sets = get_training_and_validation_sets(paths) # instancié une seule fois
+    sets = get_training_and_validation_sets(paths)
 
-    model = createModel() # nouveau pour chaque lambda (vraie grid search)
+    model = create_model()
     meta_train_params = FewShotParameters()
     meta_train_params.set_train_parameters(model, sets)
     for idx, l in enumerate(lambdas):
@@ -81,7 +81,7 @@ if PROGRESSIVE_REGULARIZATON:
     meta_test_params = FewShotParameters()
     test_set = load_meta_test_set(paths)
     meta_test_params.set_test_parameters(test_set)
-    model = createModel()
+    model = create_model()
     state_dict = torch.load(best_learner_grid_search_parameters_file)
     model.load_state_dict(state_dict)
     test_acc, test_std = meta_test(model, meta_test_params, use_gpu)

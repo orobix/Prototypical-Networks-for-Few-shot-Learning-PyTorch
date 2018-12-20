@@ -1,11 +1,10 @@
-import torch
 from torch import optim
 
 from prototypical_loss import PrototypicalLoss
 from utils.dataloader import (load_meta_test_dataloader, load_meta_train_dataloaders)
 
 
-class FewShotParameters():
+class FewShotParameters:
     def __init__(self):
         self.n_episodes = None
         self.n_epochs = None
@@ -28,7 +27,7 @@ class FewShotParameters():
         n_support = 5
         n_query = 15
         samples_per_class = n_support + n_query
-        n_ways = (5,5)
+        n_ways = (5, 5)
 
         self.train_loader, self.valid_loader = load_meta_train_dataloaders(sets,
                                                                            samples_per_class=samples_per_class,
@@ -40,9 +39,9 @@ class FewShotParameters():
 
         self.criterion = PrototypicalLoss(n_support)
 
-        #* Reduce the learning rate by half every 2000 episodes
+        # Reduce the learning rate by half every 2000 episodes
         self.scheduler = optim.lr_scheduler.StepLR(self.optimizer,
-                                                   step_size=20, # 20 epochs of 100 episodes
+                                                   step_size=20,  # 20 epochs of 100 episodes
                                                    gamma=0.5)
 
     def set_test_parameters(self, test_set):

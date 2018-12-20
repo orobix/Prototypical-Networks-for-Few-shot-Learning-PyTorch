@@ -19,7 +19,7 @@ def test_forKownInput_lossFunctionOutputShouldBeExpectedOne():
     # assert
     expected_loss = 1.8843656778335571
     expected_acc = 0.47999998927116394
-    assert abs(expected_loss - loss.item()) < 1e-9 # on compare des floats alors on veut éviter des fp errors
+    assert abs(expected_loss - loss.item()) < 1e-9  # float compare so sensible to floating points errors
     assert abs(expected_acc - acc.item()) < 1e-9
 
 

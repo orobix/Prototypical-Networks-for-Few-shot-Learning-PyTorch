@@ -1,8 +1,8 @@
 import numpy as np
-import torch
 from torch.autograd import Variable
 
 from tqdm import tqdm
+
 
 def meta_test(model, params, use_gpu):
     all_avg_acc = []

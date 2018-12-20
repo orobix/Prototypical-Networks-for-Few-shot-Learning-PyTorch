@@ -1,13 +1,12 @@
 import copy
-import math
 from torch.autograd import Variable
 
 from tqdm import tqdm
 
+
 def meta_train(model, params, use_gpu):
     best_model_weights = None
     best_avg_val_acc = 0
-    best_avg_val_loss = math.inf
     patience_counter = 0
 
     for epoch in range(params.n_epochs):
@@ -41,7 +40,8 @@ def meta_train(model, params, use_gpu):
 
             train_loss, train_accuracy = params.criterion(predictions, targets)
 
-            weights_absolute_sum = params.l1_lambda * sum([abs(p[1].cpu().data).sum() for p in model.named_parameters()]).item()
+            all_model_weights = [abs(p[1].cpu().data).sum() for p in model.named_parameters()]
+            weights_absolute_sum = params.l1_lambda * sum(all_model_weights).item()
             regularized_loss = train_loss + weights_absolute_sum
             regularized_loss.backward()
             params.optimizer.step()
@@ -55,7 +55,7 @@ def meta_train(model, params, use_gpu):
 
             val_loss, val_acc = params.criterion(val_predictions, val_targets)
       
-            avg_val_loss = val_loss.cpu().data.numpy() / params.n_episodes
+            avg_val_loss += val_loss.cpu().data.numpy() / params.n_episodes
             avg_val_acc += val_acc.cpu().data.numpy() / params.n_episodes
 
             progress_bar.set_postfix({'avg_t_loss': avg_train_loss,
@@ -66,7 +66,6 @@ def meta_train(model, params, use_gpu):
         # Deep copy the best model
         if avg_val_acc > best_avg_val_acc:
             patience_counter = 0
-            best_avg_val_loss = avg_val_loss
             best_avg_val_acc = avg_val_acc
             best_model_weights = copy.deepcopy(model.state_dict())
         else:
@@ -76,4 +75,3 @@ def meta_train(model, params, use_gpu):
             return best_model_weights, best_avg_val_acc
 
     return best_model_weights, best_avg_val_acc
-
