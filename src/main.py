@@ -5,7 +5,7 @@ from protonet import ProtoNet
 from utils.few_shot_parameters import FewShotParameters
 from utils.meta_test import meta_test
 from utils.meta_train import meta_train
-from utils.dataloader import load_meta_train_set, load_meta_test_set
+from utils.dataloader import load_meta_train_set, load_meta_test_set, get_training_and_validation_sets
 
 use_gpu = torch.cuda.is_available()
 paths = {'root_dir': '../mini_imagenet/images',
@@ -19,7 +19,7 @@ best_learner_grid_search_parameters_file = 'best_protonet_gs.pt'
 # Control parameters
 EXECUTE_TRAINING = 0
 EXECUTE_TEST = 0
-GRID_SEARCH = 1
+PROGRESSIVE_REGULARIZATON = 1
 
 
 def createModel():
@@ -28,22 +28,13 @@ def createModel():
         model = model.cuda()
     return model
 
-
-def getTrainingAndValidationSets(paths):
-    train_set, valid_set = load_meta_train_set(paths)
-    sets = {'train_set': train_set,
-            'valid_set': valid_set}
-    return sets
-
 #*#################################
 #*             Train              #
 #*#################################
 if EXECUTE_TRAINING:
     model = createModel()
     meta_train_params = FewShotParameters()
-
-    sets = getTrainingAndValidationSets(paths)
-
+    sets = get_training_and_validation_sets(paths)
     meta_train_params.set_train_parameters(model, sets)
     best_learner_weights, _ = meta_train(model, meta_train_params, use_gpu)
     torch.save(best_learner_weights, best_learner_parameters_file)
@@ -67,20 +58,18 @@ if EXECUTE_TEST:
 #*#################################
 #*             Grid               #
 #*#################################
-if GRID_SEARCH:
+if PROGRESSIVE_REGULARIZATON:
     best_learner_weights = None
     best_valid_acc = 0
     best_lambda = 0
     lambdas = numpy.logspace(-2, 1, 10)
 
-    sets = getTrainingAndValidationSets(paths) # instancié une seule fois
+    sets = get_training_and_validation_sets(paths) # instancié une seule fois
 
+    model = createModel() # nouveau pour chaque lambda (vraie grid search)
+    meta_train_params = FewShotParameters()
+    meta_train_params.set_train_parameters(model, sets)
     for l in lambdas:
-
-        model = createModel() # nouveau pour chaque lambda (vraie grid search)
-        meta_train_params = FewShotParameters()
-        meta_train_params.set_train_parameters(model, sets)
-
         meta_train_params.l1_lambda = l
         learner_weights, valid_acc = meta_train(model, meta_train_params, use_gpu)
         print('Current lambda %.5f and valid accuracy %.5f' % (l, valid_acc))
@@ -91,10 +80,8 @@ if GRID_SEARCH:
             torch.save(learner_weights, best_learner_grid_search_parameters_file)
 
     meta_test_params = FewShotParameters()
-
     test_set = load_meta_test_set(paths)
-
-    meta_test_params = meta_test_params.set_test_parameters(test_set)
+    meta_test_params.set_test_parameters(test_set)
     model = createModel()
     state_dict = torch.load(best_learner_grid_search_parameters_file)
     model.load_state_dict(state_dict)
