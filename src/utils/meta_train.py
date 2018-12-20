@@ -6,7 +6,8 @@ from tqdm import tqdm
 
 def meta_train(model, params, use_gpu):
     best_model_weights = None
-    best_valid_acc = 0
+    best_avg_valid_acc = 0
+    best_avg_valid_loss = math.inf
     patience_counter = 0
 
     for epoch in range(params.n_epochs):
@@ -19,6 +20,7 @@ def meta_train(model, params, use_gpu):
 
         avg_train_loss = 0
         avg_train_acc = 0
+        avg_val_loss = 0
         avg_val_acc = 0
         for (idx, train_batch), (val_idx, val_batch) in zip(enumerate(progress_bar), enumerate(params.valid_loader)):
 
@@ -52,25 +54,26 @@ def meta_train(model, params, use_gpu):
             avg_train_loss += train_loss.cpu().data.numpy() / params.n_episodes
 
             val_loss, val_acc = params.criterion(val_predictions, val_targets)
-            val_loss = val_loss.cpu().data.numpy()
-
+      
+            avg_val_loss = val_loss.cpu().data.numpy() / params.n_episodes
             avg_val_acc += val_acc.cpu().data.numpy() / params.n_episodes
 
-            progress_bar.set_postfix({'train-loss': avg_train_loss,
-                                      'val-loss': val_loss,
-                                      't_acc': avg_train_acc,
-                                      'v_acc': avg_val_acc})
+            progress_bar.set_postfix({'avg_t_loss': avg_train_loss,
+                                      'avg_v_loss': avg_val_loss,
+                                      'avg_t_acc': avg_train_acc,
+                                      'avg_v_acc': avg_val_acc})
 
         # Deep copy the best model
-        if val_acc > best_valid_acc:
+        if avg_val_loss < best_avg_valid_loss:
             patience_counter = 0
-            best_valid_acc = val_acc
+            best_avg_valid_loss = avg_val_loss
+            best_avg_valid_acc = avg_val_acc
             best_model_weights = copy.deepcopy(model.state_dict())
         else:
             patience_counter += 1
 
         if patience_counter >= params.PATIENCE_LIMIT:
-            return best_model_weights, best_valid_acc
+            return best_model_weights, best_avg_valid_acc
 
-    return best_model_weights, best_valid_acc
+    return best_model_weights, best_avg_valid_acc
 
