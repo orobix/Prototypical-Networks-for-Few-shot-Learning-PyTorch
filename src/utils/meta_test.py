@@ -28,4 +28,5 @@ def meta_test(model, params, use_gpu):
             avg_acc += test_accuracy.cpu().data.numpy() / params.n_episodes
 
         all_avg_acc.append(avg_acc)
-    return np.mean(all_avg_acc)
+        
+    return np.mean(all_avg_acc), np.std(all_avg_acc)

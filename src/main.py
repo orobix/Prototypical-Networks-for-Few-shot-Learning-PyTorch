@@ -47,8 +47,8 @@ if EXECUTE_TEST:
     test_set = load_meta_test_set(paths)
 
     meta_test_params.set_test_parameters(test_set)
-    avg_acc = meta_test(model, meta_test_params, use_gpu)
-    print('Average test accuracy: {}'.format(avg_acc))
+    avg_test_acc, test_std = meta_test(model, meta_test_params, use_gpu)
+    print('Average test accuracy: {} with a std of {}'.format(avg_test_acc * 100, test_std * 100))
 
 
 if PROGRESSIVE_REGULARIZATON:
@@ -71,7 +71,7 @@ if PROGRESSIVE_REGULARIZATON:
         if idx == 0:
             torch.save(learner_weights, best_learner_parameters_file)
 
-        print('Current lambda %.5f and valid accuracy %.5f' % (l, valid_acc))
+        print('Current lambda %.5f and valid accuracy %.5f' % (l, valid_acc * 100))
         if valid_acc > best_valid_acc:
             best_valid_acc = valid_acc
             best_learner_weights = learner_weights
@@ -84,7 +84,7 @@ if PROGRESSIVE_REGULARIZATON:
     model = createModel()
     state_dict = torch.load(best_learner_grid_search_parameters_file)
     model.load_state_dict(state_dict)
-    test_acc = meta_test(model, meta_test_params, use_gpu)
-    print('Test accuracy: {}'.format(test_acc))
-    print("Best model validation accuracy: {}".format(best_valid_acc))
+    test_acc, test_std = meta_test(model, meta_test_params, use_gpu)
+    print('Test accuracy: {} with a std of {}'.format(test_acc * 100, test_std * 100))
+    print("Best model validation accuracy: {}".format(best_valid_acc * 100))
     print("Applied lambda values (in order): {}".format(str(applied_lambdas)))
