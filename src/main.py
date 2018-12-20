@@ -64,9 +64,13 @@ if PROGRESSIVE_REGULARIZATON:
     model = createModel() # nouveau pour chaque lambda (vraie grid search)
     meta_train_params = FewShotParameters()
     meta_train_params.set_train_parameters(model, sets)
-    for l in lambdas:
+    for idx, l in enumerate(lambdas):
         meta_train_params.l1_lambda = l
         learner_weights, valid_acc = meta_train(model, meta_train_params, use_gpu)
+
+        if idx == 0:
+            torch.save(learner_weights, best_learner_parameters_file)
+
         print('Current lambda %.5f and valid accuracy %.5f' % (l, valid_acc))
         if valid_acc > best_valid_acc:
             best_valid_acc = valid_acc
