@@ -4,21 +4,9 @@ from prototypical_loss import PrototypicalLoss
 from utils.dataloader import (load_meta_test_dataloader, load_meta_train_dataloaders)
 
 
-class FewShotParameters:
-    def __init__(self):
-        self.n_episodes = None
-        self.n_epochs = None
-        self.l1_lambda = None
-        self.train_loader = None
-        self.valid_loader = None
-        self.test_loader = None
-        self.optimizer = None
-        self.criterion = None
-        self.scheduler = None
+class FewShotTrainingParameters:
 
-        self.PATIENCE_LIMIT = 20
-
-    def set_train_parameters(self, model, sets):
+    def __init__(self, model, sets):
         self.n_episodes = 100
         self.n_epochs = 10000
         self.l1_lambda = 0.1
@@ -35,7 +23,7 @@ class FewShotParameters:
                                                                            classes_per_it=n_ways)
 
         self.optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()),
-                                               lr=learning_rate)
+                                    lr=learning_rate)
 
         self.criterion = PrototypicalLoss(n_support)
 
@@ -44,7 +32,12 @@ class FewShotParameters:
                                                    step_size=20,  # 20 epochs of 100 episodes
                                                    gamma=0.5)
 
-    def set_test_parameters(self, test_set):
+        self.PATIENCE_LIMIT = 20
+
+
+class FewShotTestParameters:
+
+    def __init__(self, test_set):
         n_support = 5
         n_query = 15
         n_ways = 5
