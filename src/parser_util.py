@@ -1,4 +1,5 @@
 # coding=utf-8
+import os
 import argparse
 
 
@@ -7,12 +8,12 @@ def get_parser():
     parser.add_argument('-root', '--dataset_root',
                         type=str,
                         help='path to dataset',
-                        default='../dataset')
+                        default='..' + os.sep + 'dataset')
 
     parser.add_argument('-exp', '--experiment_root',
                         type=str,
                         help='root where to store models, losses and accuracies',
-                        default='../output')
+                        default='..' + os.sep + 'output')
 
     parser.add_argument('-nep', '--epochs',
                         type=int,

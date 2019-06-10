@@ -32,7 +32,7 @@ class OmniglotDataset(data.Dataset):
     raw_folder = 'raw'
     processed_folder = 'data'
 
-    def __init__(self, mode='train', root='../dataset', transform=None, target_transform=None, download=True):
+    def __init__(self, mode='train', root='..' + os.sep + 'dataset', transform=None, target_transform=None, download=True):
         '''
         The items are (filename,category). The index of all the categories can be found in self.idx_classes
         Args:
@@ -52,7 +52,6 @@ class OmniglotDataset(data.Dataset):
         if not self._check_exists():
             raise RuntimeError(
                 'Dataset not found. You can use download=True to download it')
-
         self.classes = get_current_classes(os.path.join(
             self.root, self.splits_folder, mode + '.txt'))
         self.all_items = find_items(os.path.join(
@@ -78,7 +77,7 @@ class OmniglotDataset(data.Dataset):
     def get_path_label(self, index):
         filename = self.all_items[index][0]
         rot = self.all_items[index][-1]
-        img = str.join('/', [self.all_items[index][2], filename]) + rot
+        img = str.join(os.sep, [self.all_items[index][2], filename]) + rot
         target = self.idx_classes[self.all_items[index]
                                   [1] + self.all_items[index][-1]]
         if self.target_transform is not None:
@@ -109,7 +108,7 @@ class OmniglotDataset(data.Dataset):
         for k, url in self.vinyals_split_sizes.items():
             print('== Downloading ' + url)
             data = urllib.request.urlopen(url)
-            filename = url.rpartition('/')[-1]
+            filename = url.rpartition(os.sep)[-1]
             file_path = os.path.join(self.root, self.splits_folder, filename)
             with open(file_path, 'wb') as f:
                 f.write(data.read())
@@ -117,7 +116,7 @@ class OmniglotDataset(data.Dataset):
         for url in self.urls:
             print('== Downloading ' + url)
             data = urllib.request.urlopen(url)
-            filename = url.rpartition('/')[2]
+            filename = url.rpartition(os.sep)[2]
             file_path = os.path.join(self.root, self.raw_folder, filename)
             with open(file_path, 'wb') as f:
                 f.write(data.read())
@@ -136,12 +135,12 @@ class OmniglotDataset(data.Dataset):
 
 def find_items(root_dir, classes):
     retour = []
-    rots = ['/rot000', '/rot090', '/rot180', '/rot270']
+    rots = [os.sep + 'rot000', os.sep + 'rot090', os.sep + 'rot180', os.sep + 'rot270']
     for (root, dirs, files) in os.walk(root_dir):
         for f in files:
-            r = root.split('/')
+            r = root.split(os.sep)
             lr = len(r)
-            label = r[lr - 2] + "/" + r[lr - 1]
+            label = r[lr - 2] + os.sep + r[lr - 1]
             for rot in rots:
                 if label + rot in classes and (f.endswith("png")):
                     retour.extend([(f, label, root, rot)])
@@ -160,12 +159,12 @@ def index_classes(items):
 
 def get_current_classes(fname):
     with open(fname) as f:
-        classes = f.read().splitlines()
+        classes = f.read().replace('/', os.sep).splitlines()
     return classes
 
 
 def load_img(path, idx):
-    path, rot = path.split('/rot')
+    path, rot = path.split(os.sep + 'rot')
     if path in IMG_CACHE:
         x = IMG_CACHE[path]
     else:
