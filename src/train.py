@@ -166,7 +166,7 @@ def test(opt, test_dataloader, model):
             x, y = x.to(device), y.to(device)
             model_output = model(x)
             _, acc = loss_fn(model_output, target=y,
-                             n_support=opt.num_support_tr)
+                             n_support=opt.num_support_val)
             avg_acc.append(acc.item())
     avg_acc = np.mean(avg_acc)
     print('Test Acc: {}'.format(avg_acc))
